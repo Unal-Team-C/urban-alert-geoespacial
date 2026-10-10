@@ -14,3 +14,7 @@
 - Copiado desde el monorepo UrbanAlert (`backend/UrbanAlert.Geoespacial`, commit 46daa1f) a la raíz del repo; arnés SDD conservado.
 - README del servicio como README raíz (+ sección SDD); la guía del arnés pasa a `.sdd/GUIA.md`; `.gitignore` fusionado.
 - Remoto `origin` → github.com/Unal-Team-C/urban-alert-geoespacial.
+
+## 2026-10-10 · general · Decisión: en AWS solo se aplica el esquema
+- RDS PostgreSQL 17 + PostGIS (`urban-alert-geoespacial-db`, us-east-2) se inicializa solo con `db/schema.sql` + usuario `geospatial_app` (SELECT, INSERT).
+- Sin datos semilla (`db/seed.sql`) ni base `geospatial_test` en AWS; las pruebas de integración corren en GitHub Actions. Local (compose + 01_init.sh) sin cambios.

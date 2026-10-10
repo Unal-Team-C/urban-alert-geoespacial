@@ -20,6 +20,7 @@ Crear la feature de migración a AWS con `/sdd-new` (CI/CD con GitHub Actions + 
      hipótesis en curso, comandos útiles, gotchas, archivos a mirar, lo que ibas a probar. -->
 
 - Código del servicio copiado desde UrbanAlert `backend/UrbanAlert.Geoespacial` (commit origen 46daa1f). Remoto: https://github.com/Unal-Team-C/urban-alert-geoespacial (privado).
+- AWS (cuenta 348364742283, us-east-2): rol OIDC de GitHub, roles `urban-alert-ecs-execution-role` / `urban-alert-ecs-infrastructure-role`, ECR `urban-alert-geoespacial`. RDS en curso: solo esquema, sin seed ni `geospatial_test` (ver journal).
 - Los hooks del arnés llaman a `powershell`, que no está instalado en este Mac (macOS): no se ejecutan hasta instalar `pwsh` y ajustar `.claude/settings.json`.
 
 ## Bloqueos / preguntas abiertas
