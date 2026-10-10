@@ -1,0 +1,66 @@
+name: urbanalert-geospatial
+
+x-db-credentials: &db-credentials
+  POSTGRES_USER: ${POSTGRES_USER:-geospatial}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-geospatial}
+  POSTGRES_DB: ${POSTGRES_DB:-geospatial}
+
+services:
+  db:
+    build:
+      context: ./db
+    environment:
+      <<: *db-credentials
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db:/geospatial-db:ro
+      - ./db/init/01_init.sh:/docker-entrypoint-initdb.d/20_geospatial.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      target: runtime
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://geospatial:geospatial@db:5432/geospatial}
+      DB_POOL_MIN: ${DB_POOL_MIN:-5}
+      DB_POOL_MAX: ${DB_POOL_MAX:-50}
+      MAX_RADIUS_M: ${MAX_RADIUS_M:-6000}
+      BOGOTA_MIN_LAT: ${BOGOTA_MIN_LAT:-3.72}
+      BOGOTA_MAX_LAT: ${BOGOTA_MAX_LAT:-4.84}
+      BOGOTA_MIN_LON: ${BOGOTA_MIN_LON:--74.46}
+      BOGOTA_MAX_LON: ${BOGOTA_MAX_LON:--73.98}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    depends_on:
+      db:
+        condition: service_healthy
+
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-geospatial}:${POSTGRES_PASSWORD:-geospatial}@db:5432/geospatial_test
+      DB_POOL_MIN: 1
+      DB_POOL_MAX: 5
+      MAX_RADIUS_M: 6000
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

@@ -1,0 +1,10 @@
+.sdd/activity.log
+.claude/settings.local.json
+.claude/settings.json.bak-sdd
+
+# Servicio
+.env
+__pycache__/
+.pytest_cache/
+.venv/
+.DS_Store
