@@ -1,7 +1,7 @@
 # Tareas: Migración del Servicio Geoespacial a AWS
 
 - **Plan**: ./plan.md
-- **Estado**: borrador <!-- borrador | aprobado -->
+- **Estado**: aprobado <!-- borrador | aprobado -->
 
 Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecha · `[!]` bloqueada · `[-]` descartada · `[P]` paralelizable
 
@@ -62,7 +62,7 @@ Dependencias explícitas: añadir `— depende: T00X`.
 
 ## Fase 7: Revisión v2 — exposición por el API Gateway compartido (plan §Revisión v2)
 
-- [ ] T026 Renombrar el stack `infra/platform` a `infra/base` (backend `geoespacial/base.tfstate`, `Stack = "base"`, prueba `tests/base.tftest.hcl`) y actualizar todas las referencias (workflows, README, INVENTARIO, CLAUDE.md, bootstrap) — archivos: infra/base/**, .github/workflows/*.yml, README.md, infra/INVENTARIO.md, CLAUDE.md — cubre: RF-010 (D-020) — verifica: `$TF -chdir=infra/base init -backend=false && validate && test` en verde; `grep -rn "infra/platform\|platform.tfstate" --exclude-dir=specs --exclude-dir=.sdd .` sin resultados
+- [x] T026 Renombrar el stack `infra/platform` a `infra/base` (backend `geoespacial/base.tfstate`, `Stack = "base"`, prueba `tests/base.tftest.hcl`) y actualizar todas las referencias (workflows, README, INVENTARIO, CLAUDE.md, bootstrap) — archivos: infra/base/**, .github/workflows/*.yml, README.md, infra/INVENTARIO.md, CLAUDE.md — cubre: RF-010 (D-020) — verifica: `$TF -chdir=infra/base init -backend=false && validate && test` en verde; `grep -rn "infra/platform\|platform.tfstate" --exclude-dir=specs --exclude-dir=.sdd .` sin resultados
 - [ ] T027 Tomar la red de la plataforma desde SSM (`vpc-id`, `subredes-privadas`) en lugar de la VPC predeterminada; SG y subnet group en la VPC compartida; pruebas con `override_data` de los parámetros — archivos: infra/base/network.tf, infra/base/rds.tf, infra/base/outputs.tf, infra/base/tests/base.tftest.hcl — cubre: RF-019 (D-021) — verifica: `$TF -chdir=infra/base test` en verde, con asserts de VPC del SG = `vpc-id` de SSM y subredes del subnet group = `subredes-privadas` — depende: T026
 - [ ] T028 [P] Copiar `buscar-listener-express.sh` de la plataforma y crear `check-platform.sh` (falla con mensaje claro si falta algún parámetro de `/urban-alert/plataforma/`), con una prueba que use un `aws` simulado en el PATH — archivos: scripts/buscar-listener-express.sh, scripts/check-platform.sh, scripts/tests/test-check-platform.sh — cubre: RF-021 (D-025) — verifica: `bash scripts/tests/test-check-platform.sh` pasa (9 parámetros → 0; falta uno → ≠0 y mensaje «plataforma compartida no está aprovisionada»); shellcheck sin avisos
 - [ ] T029 [P] Lanzar la tarea del esquema sin IP pública — archivos: scripts/run-schema-task.sh — cubre: RF-019 (D-022) — verifica: `grep -c "assignPublicIp=DISABLED" scripts/run-schema-task.sh` = 1; shellcheck sin avisos

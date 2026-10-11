@@ -1,8 +1,8 @@
-# terraform test with mocked providers and a fake platform state: no AWS credentials, no real resources.
+# terraform test with mocked providers and a fake base state: no AWS credentials, no real resources.
 mock_provider "aws" {}
 
 override_data {
-  target = data.terraform_remote_state.platform
+  target = data.terraform_remote_state.base
   values = {
     outputs = {
       name                    = "urban-alert-geoespacial"
@@ -22,7 +22,7 @@ variables {
   image_tag = "0123456789abcdef"
 }
 
-run "container_matches_the_platform_contract" {
+run "container_matches_the_base_contract" {
   command = plan
 
   assert {

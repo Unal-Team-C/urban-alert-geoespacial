@@ -45,7 +45,7 @@ aws s3api put-bucket-policy --bucket $B --policy file://tfstate-bucket-policy.js
 aws s3api put-bucket-lifecycle-configuration --bucket $B --lifecycle-configuration file://tfstate-lifecycle.json
 ```
 
-Cada servicio usa su propia clave dentro del bucket (`geoespacial/platform.tfstate`, `geoespacial/service.tfstate`). El bloqueo usa objetos `.tflock` (`use_lockfile`), sin DynamoDB.
+Cada servicio usa su propia clave dentro del bucket (`geoespacial/base.tfstate`, `geoespacial/service.tfstate`). El bloqueo usa objetos `.tflock` (`use_lockfile`), sin DynamoDB.
 
 ## 4. Secretos y variables de GitHub
 

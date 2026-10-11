@@ -151,7 +151,7 @@ En AWS se usa `DB_POOL_MAX=5` con un máximo de 10 tareas, y Terraform rechaza c
 Cuenta `348364742283`, región `us-east-2`. Todo lo que no es de arranque está en Terraform ([infra/](infra/)) y se aplica solo desde GitHub Actions.
 
 ```text
-push a main ─► Provision: pruebas ─► Terraform platform ─► imagen :<sha> en ECR ─► tarea ECS del esquema ─► Terraform service ─► /health
+push a main ─► Provision: pruebas ─► Terraform base ─► imagen :<sha> en ECR ─► tarea ECS del esquema ─► Terraform service ─► /health
                                      (ECR, roles, red, RDS,                         (db/schema.sql +       (ECS Express Mode:
                                       secreto, logs, clúster)                        rol geospatial_app)     ALB + HTTPS + autoscaling)
 ```
@@ -162,7 +162,7 @@ push a main ─► Provision: pruebas ─► Terraform platform ─► imagen :<
 | Servicio | ECS Express Mode (Fargate, X86_64), 0,5 vCPU / 1 GiB, 1–10 tareas por CPU al 60 %. URL pública HTTPS: en el resumen de cada ejecución de *Provision* |
 | Credenciales | La aplicación usa el rol `geospatial_app` (solo `SELECT`, `INSERT`); su `DATABASE_URL` está en Secrets Manager (`urban-alert-geoespacial-db`). El usuario maestro lo gestiona RDS. |
 | Logs | CloudWatch: `/ecs/urban-alert-geoespacial` (servicio, JSON por línea) y `/ecs/urban-alert-geoespacial-schema` (migraciones), 30 días |
-| Estado de Terraform | `s3://urban-alert-tfstate-348364742283/geoespacial/{platform,service}.tfstate` |
+| Estado de Terraform | `s3://urban-alert-tfstate-348364742283/geoespacial/{base,service}.tfstate` |
 
 ### Antes del primer despliegue (una sola vez)
 
@@ -182,7 +182,7 @@ Los recursos que se crearon a mano antes del código (ECR y roles de ECS) se imp
 
 | Workflow | Cuándo | Qué hace |
 |---|---|---|
-| [Provision](.github/workflows/provision.yml) | Cada push a `main` | Pruebas (Python, `terraform fmt/validate/test`, actionlint) → aplica `infra/platform` → construye y sube la imagen con el SHA del commit → aplica `db/schema.sql` con una tarea ECS dentro de la VPC → aplica `infra/service` → comprueba `/health`. Si un paso falla, los siguientes no se ejecutan. |
+| [Provision](.github/workflows/provision.yml) | Cada push a `main` | Pruebas (Python, `terraform fmt/validate/test`, actionlint) → aplica `infra/base` → construye y sube la imagen con el SHA del commit → aplica `db/schema.sql` con una tarea ECS dentro de la VPC → aplica `infra/service` → comprueba `/health`. Si un paso falla, los siguientes no se ejecutan. |
 | [Deprovision](.github/workflows/deprovision.yml) | A mano: Actions → Deprovision → Run workflow (rama `main`), escribiendo `urban-alert-geoespacial` | Destruye el servicio, quita la protección de la base, deja una copia final `urban-alert-geoespacial-final-<run_id>` y destruye la plataforma. No toca los recursos de arranque. |
 
 Los dos comparten un grupo de concurrencia: nunca se ejecutan a la vez. El rol de AWS solo confía en `main`, así que desde otras ramas no obtienen credenciales.
@@ -204,8 +204,8 @@ Con el entorno encendido, el coste aproximado es el balanceador (~16–20 USD/me
 No hace falta instalar Terraform: con Podman,
 
 ```bash
-podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/platform init -backend=false
-podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/platform test
+podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/base init -backend=false
+podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/base test
 ```
 
 ## Desarrollo con SDD
@@ -222,7 +222,7 @@ app/            servicio FastAPI (api/, domain/, db/, config.py, main.py)
 db/             Dockerfile de la BD, schema.sql, seed.sql, init/01_init.sh
 tests/          unit/, integration/, perf/ (+ test_migrate, test_shutdown)
 compose.yaml    servicios db, api y tests (perfil "test")
-infra/          Terraform: platform/, service/, bootstrap/ (arranque manual), INVENTARIO.md
+infra/          Terraform: base/, service/, bootstrap/ (arranque manual), INVENTARIO.md
 scripts/        run-schema-task.sh (tarea ECS del esquema)
 .github/        workflows provision.yml y deprovision.yml
 docs/           spec, plan, tareas y verificación originales del servicio

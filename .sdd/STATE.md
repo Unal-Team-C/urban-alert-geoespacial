@@ -6,13 +6,13 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: plan
-tarea_actual: T026
+fase: implement
+tarea_actual: T027
 estado_tarea: -
 
 ## Siguiente paso
 
-El usuario revisa y aprueba plan v2 y tareas T026–T038; con la aprobación: Estado aprobado en ambos → /sdd-implement desde T026.
+T027: red desde SSM en infra/base (network.tf, rds.tf, outputs) + override_data en base.tftest.hcl.
 
 ## Contexto de trabajo
 

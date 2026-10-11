@@ -147,3 +147,9 @@
 ## 2026-10-11 · 002-migracion-aws · Plan y tareas v2 (borrador)
 - Plan: sección «Revisión v2» + D-020 (stack routes, renombre platform→base), D-021 (red por SSM, sustituye D-006), D-022 (esquema sin IP pública), D-023 (rutas como el ejemplo de la plataforma), D-024 (humo por el gateway), D-025 (check-platform), D-026 (deprovision routes→service→base), D-027 (sin política nueva).
 - Tareas: T024/T025 descartadas (sustituidas por T037/T038); nuevas T026–T038 (13).
+
+## 2026-10-11 · 002-migracion-aws · Plan y tareas v2 aprobados
+- Aprobados por el usuario. Implementación desde T026.
+
+## 2026-10-10 · 002-migracion-aws · T026 hecha
+- git mv infra/platform → infra/base (y tests/base.tftest.hcl); backend geoespacial/base.tfstate; Stack=base; service lee terraform_remote_state "base"; workflows, README, INVENTARIO, CLAUDE.md, bootstrap y run-schema-task.sh actualizados. Verificado: validate+test base (6) y service (4) en verde, fmt limpio, actionlint OK; grep de infra/platform y platform.tfstate sin resultados fuera de specs/.sdd.

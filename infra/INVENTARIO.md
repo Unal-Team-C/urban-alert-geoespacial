@@ -4,7 +4,7 @@ Cuenta `348364742283`, región `us-east-2`. Spec 002, RF-010b y RF-010c.
 
 ## 1. Recursos creados a mano e importados a Terraform
 
-Se crearon en la consola antes de existir el código. El stack `infra/platform` los importa en su primera ejecución con los bloques de `infra/platform/imports.tf`, que se borra después (plan D-005): un bloque `import` permanente fallaría tras un desaprovisionamiento, porque el recurso ya no existiría.
+Se crearon en la consola antes de existir el código. El stack `infra/base` los importa en su primera ejecución con los bloques de `infra/base/imports.tf`, que se borra después (plan D-005): un bloque `import` permanente fallaría tras un desaprovisionamiento, porque el recurso ya no existiría.
 
 Si se pierde el estado de Terraform con estos recursos todavía en AWS, se vuelven a importar copiando los bloques de la última columna a un `imports.tf` temporal.
 
@@ -27,7 +27,7 @@ No existían antes del código; los crea y destruye Terraform.
 
 | Stack | Recursos |
 |---|---|
-| `platform` | SG `urban-alert-geoespacial-tasks` y `urban-alert-geoespacial-rds`, subnet group y RDS `urban-alert-geoespacial-db` (con su secreto `rds!…` gestionado por RDS), secreto `urban-alert-geoespacial-db`, clúster ECS `urban-alert-geoespacial`, grupos de logs `/ecs/urban-alert-geoespacial` y `/ecs/urban-alert-geoespacial-schema`, task definition `urban-alert-geoespacial-schema`, regla de ciclo de vida de ECR |
+| `base` | SG `urban-alert-geoespacial-tasks` y `urban-alert-geoespacial-rds`, subnet group y RDS `urban-alert-geoespacial-db` (con su secreto `rds!…` gestionado por RDS), secreto `urban-alert-geoespacial-db`, clúster ECS `urban-alert-geoespacial`, grupos de logs `/ecs/urban-alert-geoespacial` y `/ecs/urban-alert-geoespacial-schema`, task definition `urban-alert-geoespacial-schema`, regla de ciclo de vida de ECR |
 | `service` | Servicio ECS Express `urban-alert-geoespacial` (con el balanceador, el certificado y el escalado que crea ECS con el rol de infraestructura) |
 
 ## 3. Recursos externos de arranque (no gestionados por Terraform)

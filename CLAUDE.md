@@ -10,7 +10,7 @@ para migrarlo a AWS con CI/CD en GitHub Actions. Python 3.13 + FastAPI + asyncpg
 
 AWS (spec `specs/002-migracion-aws/`): cuenta 348364742283, us-east-2. Terraform se aplica solo desde GitHub Actions.
 
-- `infra/platform` (ECR, roles ECS, red, RDS, secreto, logs, clúster, task definition del esquema) e `infra/service` (ECS Express) con estado en `s3://urban-alert-tfstate-348364742283/geoespacial/`. Arranque manual e inventario: `infra/bootstrap/`, `infra/INVENTARIO.md`.
+- `infra/base` (ECR, roles ECS, red, RDS, secreto, logs, clúster, task definition del esquema) e `infra/service` (ECS Express) con estado en `s3://urban-alert-tfstate-348364742283/geoespacial/`. Arranque manual e inventario: `infra/bootstrap/`, `infra/INVENTARIO.md`.
 - Workflows: `.github/workflows/provision.yml` (push a `main`) y `deprovision.yml` (manual, confirmación `urban-alert-geoespacial`).
 - Esquema en la nube: `python -m app.db.migrate` (tarea ECS lanzada por `scripts/run-schema-task.sh`).
 - Validación local sin instalar nada (Podman):

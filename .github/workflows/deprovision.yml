@@ -1,5 +1,5 @@
 # Deprovisioning (spec 002, HU-2, RF-013): manual only, with explicit confirmation.
-# Removes everything Terraform manages (service, then platform) after a final RDS snapshot.
+# Removes everything Terraform manages (service, then base) after a final RDS snapshot.
 # Bootstrap resources (OIDC, workflow role, state bucket) are not managed by Terraform and stay (RF-010c).
 name: Deprovision
 
@@ -70,19 +70,19 @@ jobs:
       - name: Lift protection and set the final snapshot name
         id: unprotect
         run: |
-          terraform -chdir=infra/platform init -input=false
-          if [ -z "$(terraform -chdir=infra/platform state list)" ]; then
-            echo "Platform stack is already empty: nothing to delete."
+          terraform -chdir=infra/base init -input=false
+          if [ -z "$(terraform -chdir=infra/base state list)" ]; then
+            echo "Base stack is already empty: nothing to delete."
             echo "empty=true" >> "$GITHUB_OUTPUT"
           else
-            terraform -chdir=infra/platform apply -input=false -auto-approve \
+            terraform -chdir=infra/base apply -input=false -auto-approve \
               -var "image_tag=$IMAGE_TAG" -var allow_destroy=true -var "final_snapshot_suffix=${{ github.run_id }}"
           fi
 
-      - name: Destroy platform (final snapshot of the database is kept)
+      - name: Destroy base (final snapshot of the database is kept)
         if: steps.unprotect.outputs.empty != 'true'
         run: |
-          terraform -chdir=infra/platform destroy -input=false -auto-approve \
+          terraform -chdir=infra/base destroy -input=false -auto-approve \
             -var "image_tag=$IMAGE_TAG" -var allow_destroy=true -var "final_snapshot_suffix=${{ github.run_id }}"
           {
             echo "### Entorno eliminado"

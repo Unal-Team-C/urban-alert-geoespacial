@@ -1,7 +1,7 @@
 # Plan técnico: Migración del Servicio Geoespacial a AWS
 
 - **Spec**: ./spec.md
-- **Estado**: borrador <!-- borrador | aprobado -->
+- **Estado**: aprobado <!-- borrador | aprobado -->
 - **Fecha**: 2026-10-10
 - **Investigación**: ./research.md
 - **Revisión**: v2 (2026-10-11), por la spec v2: exposición solo por el API Gateway compartido. La sección «Revisión v2» prevalece sobre lo que contradiga en §1–§11.
