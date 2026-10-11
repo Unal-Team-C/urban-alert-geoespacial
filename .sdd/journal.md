@@ -188,3 +188,9 @@
 - OK: pruebas, check-platform, importación de los 6 recursos (ECR, roles, adjuntos, read-project-secrets), creación de SG, subnet group, secreto de la app, logs, ciclo de vida ECR (estado parcial en geoespacial/base.tfstate; el siguiente apply continúa).
 - Error 1: iam:UpdateRoleDescription denegado (el código ponía descripciones distintas a las de la consola). Corrección: sin `description` en los roles y `ignore_changes = [description]`.
 - Error 2: RDS CreateDBInstance → KMSKeyNotAccessibleFault (clave por defecto aws/rds): el rol no tiene permisos de KMS. Corrección: statement KmsDefaultKeysViaRdsAndSecretsManager en infra/bootstrap/github-terraform-policy.json (kms:* necesarios, condicionado a kms:ViaService rds/secretsmanager us-east-2). El usuario debe aplicarlo a la política gestionada en AWS.
+
+## 2026-10-11 · 002-migracion-aws · T037: segundo Provision (run 38110073916)
+- OK: base completo (RDS creado), imagen, esquema aplicado desde subredes privadas por TLS (red, NAT y secretos verificados).
+- Falla: creación de aws_ecs_express_gateway_service a los ~20 s con «No rollback candidate was found to run the rollback» (primer despliegue fallido; sin causa visible en el log de Terraform).
+- Hipótesis principal: al pasar security_groups, Express no crea su SG de servicio y el SG de tareas no admite el puerto 8000 desde el ALB interno. Corrección: regla de entrada 8000 desde el CIDR de la VPC (SSM vpc-cidr) en el SG de tareas.
+- Visibilidad: scripts/diagnose-service.sh + paso en provision.yml que, si falla el servicio, imprime eventos, despliegues, tareas paradas con motivo y últimos logs.

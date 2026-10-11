@@ -82,3 +82,9 @@ variable "schema_task_cpu" {
 variable "schema_task_memory" {
   type = number
 }
+
+variable "container_port" {
+  description = "Port the service container listens on (must match infra/service)."
+  type        = number
+  default     = 8000
+}

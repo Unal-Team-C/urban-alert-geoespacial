@@ -133,6 +133,13 @@ jobs:
             echo "name=$(terraform -chdir=infra/service output -raw service_name)"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Diagnose the service deployment (only when it failed)
+        if: failure() && steps.base.outcome == 'success'
+        env:
+          CLUSTER: ${{ steps.base.outputs.cluster }}
+          SERVICE: ${{ steps.base.outputs.name }}
+        run: scripts/diagnose-service.sh "$CLUSTER" "$SERVICE" "/ecs/$SERVICE"
+
       - name: Find the 443 listener of the Express load balancer
         id: listener
         env:

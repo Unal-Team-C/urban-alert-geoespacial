@@ -23,6 +23,11 @@ override_data {
 }
 
 override_data {
+  target = data.aws_ssm_parameter.vpc_cidr
+  values = { value = "10.20.0.0/16" }
+}
+
+override_data {
   target = data.aws_ssm_parameter.private_subnets
   values = { value = "subnet-priv-a,subnet-priv-b,subnet-priv-c" }
 }
@@ -137,6 +142,19 @@ run "uses_the_shared_private_network" {
   assert {
     condition     = output.subnet_ids == tolist(["subnet-priv-a", "subnet-priv-b", "subnet-priv-c"])
     error_message = "The service and the schema task must get every private subnet."
+  }
+}
+
+run "load_balancer_reaches_the_container_only_from_the_vpc" {
+  command = apply
+
+  assert {
+    condition = (
+      aws_vpc_security_group_ingress_rule.tasks_from_vpc.cidr_ipv4 == "10.20.0.0/16" &&
+      aws_vpc_security_group_ingress_rule.tasks_from_vpc.from_port == 8000 &&
+      aws_vpc_security_group_ingress_rule.tasks_from_vpc.to_port == 8000
+    )
+    error_message = "Tasks must accept the container port only from the shared VPC CIDR."
   }
 }
 
