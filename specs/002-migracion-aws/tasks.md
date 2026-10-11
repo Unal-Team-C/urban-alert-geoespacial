@@ -52,7 +52,7 @@ Dependencias explícitas: añadir `— depende: T00X`.
 
 ## Fase 5: Pulido
 
-- [ ] T022 [P] Añadir al README la sección «Despliegue en AWS»: arquitectura, recursos de arranque (enlace a `infra/bootstrap/`), secretos/variables de GitHub, qué hace cada workflow y cómo lanzarlos, inventario, costes aproximados y cómo desaprovisionar, restaurar la copia final y borrar copias antiguas — archivos: README.md — cubre: RF-017, RNF-006 — verifica: la sección cubre los cuatro puntos de RF-017 y enlaza `infra/bootstrap/README.md` e `infra/INVENTARIO.md`
+- [x] T022 [P] Añadir al README la sección «Despliegue en AWS»: arquitectura, recursos de arranque (enlace a `infra/bootstrap/`), secretos/variables de GitHub, qué hace cada workflow y cómo lanzarlos, inventario, costes aproximados y cómo desaprovisionar, restaurar la copia final y borrar copias antiguas — archivos: README.md — cubre: RF-017, RNF-006 — verifica: la sección cubre los cuatro puntos de RF-017 y enlaza `infra/bootstrap/README.md` e `infra/INVENTARIO.md`
 - [ ] T023 [P] Actualizar CLAUDE.md con la estructura `infra/` y los comandos de verificación con Podman — archivos: CLAUDE.md — cubre: — (pulido) — verifica: los comandos documentados coinciden con los de este fichero
 
 ## Fase 6: Despliegue real (requiere acciones del usuario en GitHub)

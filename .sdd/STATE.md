@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T022
+tarea_actual: T023
 estado_tarea: -
 
 ## Siguiente paso
 
-T022: sección «Despliegue en AWS» del README.
+T023: actualizar CLAUDE.md con infra/ y comandos de verificación con Podman.
 
 ## Contexto de trabajo
 

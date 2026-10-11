@@ -1,9 +1,10 @@
 # UrbanAlert — Servicio Geoespacial
 
-Microservicio de UrbanAlert que registra la ubicación de cada reporte de daño urbano y responde qué reportes hay cerca de un punto del mapa. Está hecho con **Python 3.13 + FastAPI** y usa una base **PostgreSQL + PostGIS** propia. Esta versión se ejecuta en local con contenedores y no usa cola de mensajes.
+Microservicio de UrbanAlert que registra la ubicación de cada reporte de daño urbano y responde qué reportes hay cerca de un punto del mapa. Está hecho con **Python 3.13 + FastAPI** y usa una base **PostgreSQL + PostGIS** propia. Se ejecuta en local con contenedores y se despliega en AWS (ECS Express Mode + RDS) con GitHub Actions y Terraform; no usa cola de mensajes.
 
 - Especificación, plan, tareas y verificación (desarrollado con SDD): [docs/](docs/) — [spec](docs/spec.md) · [plan](docs/plan.md) · [verify](docs/verify.md)
 - Documentación interactiva (OpenAPI), con el servicio arriba: <http://localhost:8000/docs>
+- Migración a AWS (spec 002): [specs/002-migracion-aws/](specs/002-migracion-aws/) — ver [Despliegue en AWS](#despliegue-en-aws)
 
 ## Requisitos
 
@@ -143,7 +144,69 @@ El despliegue objetivo es AWS ECS con autoscaling de tareas: cada tarea ejecuta 
 DB_POOL_MAX × procesos por tarea × número máximo de tareas ≤ 50
 ```
 
-Por ejemplo, `DB_POOL_MAX=5` con un máximo de 10 tareas. Si no cabe, hay que poner RDS Proxy delante (ver [plan D-013](docs/plan.md)).
+En AWS se usa `DB_POOL_MAX=5` con un máximo de 10 tareas, y Terraform rechaza cualquier combinación que supere 50. Si no cabe, hay que poner RDS Proxy delante (ver [plan D-013](docs/plan.md)).
+
+## Despliegue en AWS
+
+Cuenta `348364742283`, región `us-east-2`. Todo lo que no es de arranque está en Terraform ([infra/](infra/)) y se aplica solo desde GitHub Actions.
+
+```text
+push a main ─► Provision: pruebas ─► Terraform platform ─► imagen :<sha> en ECR ─► tarea ECS del esquema ─► Terraform service ─► /health
+                                     (ECR, roles, red, RDS,                         (db/schema.sql +       (ECS Express Mode:
+                                      secreto, logs, clúster)                        rol geospatial_app)     ALB + HTTPS + autoscaling)
+```
+
+| Pieza | Dónde |
+|---|---|
+| Base de datos | RDS PostgreSQL 17 + PostGIS, `db.t4g.micro`, privada, cifrada, TLS obligatorio, backups 7 días, protección contra borrado. Solo el esquema, sin datos semilla. |
+| Servicio | ECS Express Mode (Fargate, X86_64), 0,5 vCPU / 1 GiB, 1–10 tareas por CPU al 60 %. URL pública HTTPS: en el resumen de cada ejecución de *Provision* |
+| Credenciales | La aplicación usa el rol `geospatial_app` (solo `SELECT`, `INSERT`); su `DATABASE_URL` está en Secrets Manager (`urban-alert-geoespacial-db`). El usuario maestro lo gestiona RDS. |
+| Logs | CloudWatch: `/ecs/urban-alert-geoespacial` (servicio, JSON por línea) y `/ecs/urban-alert-geoespacial-schema` (migraciones), 30 días |
+| Estado de Terraform | `s3://urban-alert-tfstate-348364742283/geoespacial/{platform,service}.tfstate` |
+
+### Antes del primer despliegue (una sola vez)
+
+1. Crear los recursos de arranque: proveedor OIDC de GitHub, rol de los workflows con sus dos políticas y bucket del estado. Pasos y JSON en [infra/bootstrap/README.md](infra/bootstrap/README.md).
+2. En GitHub → Settings → Secrets and variables → Actions:
+
+   | Tipo | Nombre | Ejemplo |
+   |---|---|---|
+   | Secreto | `AWS_ROLE_ARN` | `arn:aws:iam::348364742283:role/github-actions-…` |
+   | Variable | `AWS_REGION` | `us-east-2` |
+
+   No hace falta nada más: nombres, tamaños y el bucket del estado están en `infra/*/terraform.tfvars` y `backend.tf`.
+
+Los recursos que se crearon a mano antes del código (ECR y roles de ECS) se importan a Terraform; la lista, con sus identificadores, está en [infra/INVENTARIO.md](infra/INVENTARIO.md).
+
+### Workflows
+
+| Workflow | Cuándo | Qué hace |
+|---|---|---|
+| [Provision](.github/workflows/provision.yml) | Cada push a `main` | Pruebas (Python, `terraform fmt/validate/test`, actionlint) → aplica `infra/platform` → construye y sube la imagen con el SHA del commit → aplica `db/schema.sql` con una tarea ECS dentro de la VPC → aplica `infra/service` → comprueba `/health`. Si un paso falla, los siguientes no se ejecutan. |
+| [Deprovision](.github/workflows/deprovision.yml) | A mano: Actions → Deprovision → Run workflow (rama `main`), escribiendo `urban-alert-geoespacial` | Destruye el servicio, quita la protección de la base, deja una copia final `urban-alert-geoespacial-final-<run_id>` y destruye la plataforma. No toca los recursos de arranque. |
+
+Los dos comparten un grupo de concurrencia: nunca se ejecutan a la vez. El rol de AWS solo confía en `main`, así que desde otras ramas no obtienen credenciales.
+
+### Costes y desaprovisionamiento
+
+Con el entorno encendido, el coste aproximado es el balanceador (~16–20 USD/mes), la instancia `db.t4g.micro` y una tarea Fargate. Cuando no se use, lanzar **Deprovision**; un nuevo push a `main` recrea todo con la base vacía.
+
+- **Restaurar la copia final**: RDS → Snapshots → `urban-alert-geoespacial-final-<run_id>` → Restore. La instancia restaurada queda fuera de Terraform; para volver a gestionarla hay que importarla en lugar de la nueva.
+- **Borrar copias antiguas** (cuestan almacenamiento):
+
+  ```bash
+  aws rds describe-db-snapshots --snapshot-type manual --query "DBSnapshots[?starts_with(DBSnapshotIdentifier,'urban-alert-geoespacial-final-')].DBSnapshotIdentifier"
+  aws rds delete-db-snapshot --db-snapshot-identifier urban-alert-geoespacial-final-<run_id>
+  ```
+
+### Validar Terraform en local (sin credenciales)
+
+No hace falta instalar Terraform: con Podman,
+
+```bash
+podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/platform init -backend=false
+podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/platform test
+```
 
 ## Desarrollo con SDD
 
@@ -157,8 +220,11 @@ Este repositorio se desarrolla con **desarrollo guiado por especificaciones (SDD
 ```text
 app/            servicio FastAPI (api/, domain/, db/, config.py, main.py)
 db/             Dockerfile de la BD, schema.sql, seed.sql, init/01_init.sh
-tests/          unit/, integration/, perf/
+tests/          unit/, integration/, perf/ (+ test_migrate, test_shutdown)
 compose.yaml    servicios db, api y tests (perfil "test")
+infra/          Terraform: platform/, service/, bootstrap/ (arranque manual), INVENTARIO.md
+scripts/        run-schema-task.sh (tarea ECS del esquema)
+.github/        workflows provision.yml y deprovision.yml
 docs/           spec, plan, tareas y verificación originales del servicio
 specs/          features SDD nuevas (spec.md · plan.md · tasks.md · verify.md)
 .sdd/ .claude/  arnés SDD: estado, journal, protocolo, hooks y comandos
