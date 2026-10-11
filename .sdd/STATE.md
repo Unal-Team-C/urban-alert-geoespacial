@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T015
+tarea_actual: T016
 estado_tarea: -
 
 ## Siguiente paso
 
-T015: infra/platform/tests/platform.tftest.hcl con mock_provider (protección/allow_destroy, RDS privada/cifrada/backups, SG, secreto).
+T016: crear infra/service (backend, remote_state de platform, aws_ecs_express_gateway_service con precondición de conexiones, salida service_url).
 
 ## Contexto de trabajo
 

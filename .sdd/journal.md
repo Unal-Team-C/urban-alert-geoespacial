@@ -94,3 +94,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T014 hecha
 - infra/platform/imports.tf: 6 bloques import (ECR, 2 roles, 2 adjuntos, read-project-secrets), con comentario de borrado tras el primer apply. Verificado: validate «Success», fmt limpio, script de cotejo: los 6 coinciden con INVENTARIO.md.
+
+## 2026-10-10 · 002-migracion-aws · T015 hecha
+- infra/platform/tests/platform.tftest.hcl: 6 runs con mock_provider (protección por defecto, RDS privada/cifrada/backups/maestro gestionado, SG solo desde tareas en 5432, secreto con TLS y recovery 0, allow_destroy con nombre de snapshot, validación del prefijo). Hallazgo: los recursos con bloque import necesitan override_resource en las pruebas (no se pueden importar de un mock). Verificado: terraform test 6 passed.
