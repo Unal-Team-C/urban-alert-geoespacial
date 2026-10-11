@@ -9,9 +9,12 @@ from app.api.errors import register_error_handlers
 from app.api.routes import health_router, router
 from app.config import Settings, get_settings
 from app.db.pool import close_pool, create_pool
+from app.observability import AccessLogMiddleware, configure_logging
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
+    configure_logging()
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.pool = await create_pool(settings or get_settings())
@@ -26,6 +29,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         summary="Location assignment and nearby-report queries for UrbanAlert.",
         lifespan=lifespan,
     )
+    app.add_middleware(AccessLogMiddleware)
     register_error_handlers(app)
     app.include_router(health_router)
     app.include_router(router)

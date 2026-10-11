@@ -1,0 +1,16 @@
+{
+  "Rules": [
+    {
+      "ID": "expirar-versiones-antiguas",
+      "Status": "Enabled",
+      "Filter": {},
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 90,
+        "NewerNoncurrentVersions": 10
+      },
+      "Expiration": {
+        "ExpiredObjectDeleteMarker": true
+      }
+    }
+  ]
+}

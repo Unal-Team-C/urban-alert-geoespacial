@@ -1,0 +1,91 @@
+# Deprovisioning (spec 002, HU-2, RF-013): manual only, with explicit confirmation.
+# Removes everything Terraform manages (service, then platform) after a final RDS snapshot.
+# Bootstrap resources (OIDC, workflow role, state bucket) are not managed by Terraform and stay (RF-010c).
+name: Deprovision
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Escribe urban-alert-geoespacial para confirmar que quieres eliminar el entorno"
+        required: true
+        type: string
+
+concurrency:
+  group: urban-alert-geoespacial-aws
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: 1.16.5
+  TF_IN_AUTOMATION: "true"
+  # Required by both stacks but irrelevant when destroying (the schema task definition is deleted too).
+  IMAGE_TAG: deprovision
+
+jobs:
+  deprovision:
+    name: Deprovision environment
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$CONFIRM" != "urban-alert-geoespacial" ]; then
+            echo "::error::Confirmation missing: type urban-alert-geoespacial. Nothing was deleted."
+            exit 1
+          fi
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Run this workflow on main (the AWS role only trusts main). Nothing was deleted."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Destroy service
+        run: |
+          terraform -chdir=infra/service init -input=false
+          if [ -z "$(terraform -chdir=infra/service state list)" ]; then
+            echo "Service stack is already empty."
+          else
+            terraform -chdir=infra/service destroy -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
+          fi
+
+      - name: Lift protection and set the final snapshot name
+        id: unprotect
+        run: |
+          terraform -chdir=infra/platform init -input=false
+          if [ -z "$(terraform -chdir=infra/platform state list)" ]; then
+            echo "Platform stack is already empty: nothing to delete."
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+          else
+            terraform -chdir=infra/platform apply -input=false -auto-approve \
+              -var "image_tag=$IMAGE_TAG" -var allow_destroy=true -var "final_snapshot_suffix=${{ github.run_id }}"
+          fi
+
+      - name: Destroy platform (final snapshot of the database is kept)
+        if: steps.unprotect.outputs.empty != 'true'
+        run: |
+          terraform -chdir=infra/platform destroy -input=false -auto-approve \
+            -var "image_tag=$IMAGE_TAG" -var allow_destroy=true -var "final_snapshot_suffix=${{ github.run_id }}"
+          {
+            echo "### Entorno eliminado"
+            echo "- Copia final de la base: \`urban-alert-geoespacial-final-${{ github.run_id }}\`"
+            echo "- Para recrearlo: haz un commit a \`main\` (workflow Provision)."
+          } >> "$GITHUB_STEP_SUMMARY"
