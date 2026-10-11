@@ -5,24 +5,22 @@
      fase: constitution | specify | clarify | plan | tasks | implement | verify | done
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
-feature_activa: ninguna
-fase: constitution
+feature_activa: 002-migracion-aws
+fase: clarify
 tarea_actual: -
 estado_tarea: -
 
 ## Siguiente paso
 
-Crear la feature de migración a AWS con `/sdd-new` (CI/CD con GitHub Actions + despliegue en ECS Express Mode + BD PostGIS en RDS). Antes, el usuario crea en GitHub los secretos/variables acordados.
+Ejecutar `/sdd-clarify` sobre specs/002-migracion-aws/spec.md: resolver las 3 dudas (qué hace el workflow manual — HU-2/RF-013; importar vs referenciar recursos creados a mano — RF-010; quién aplica el esquema — RF-016). Después, el usuario aprueba la spec para `/sdd-plan`.
 
 ## Contexto de trabajo
 
 <!-- Lo que se perdería si la sesión se corta y no está en otros archivos:
      hipótesis en curso, comandos útiles, gotchas, archivos a mirar, lo que ibas a probar. -->
 
-- Código del servicio copiado desde UrbanAlert `backend/UrbanAlert.Geoespacial` (commit origen 46daa1f). Remoto: https://github.com/Unal-Team-C/urban-alert-geoespacial (privado).
-- AWS (cuenta 348364742283, us-east-2): rol OIDC de GitHub, roles `urban-alert-ecs-execution-role` / `urban-alert-ecs-infrastructure-role`, ECR `urban-alert-geoespacial`. RDS en curso: solo esquema, sin seed ni `geospatial_test` (ver journal).
-- Los hooks del arnés llaman a `powershell`, que no está instalado en este Mac (macOS): no se ejecutan hasta instalar `pwsh` y ajustar `.claude/settings.json`.
+- Rama `aws-provisioning`. Numeración 002 porque `docs/` ya contiene la spec 001-servicio-geoespacial original.
 
 ## Bloqueos / preguntas abiertas
 
-- ninguno
+- 3 `[NEEDS CLARIFICATION]` en la spec 002 (ver siguiente paso).
