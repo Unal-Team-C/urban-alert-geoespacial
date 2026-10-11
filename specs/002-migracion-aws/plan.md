@@ -1,7 +1,7 @@
 # Plan técnico: Migración del Servicio Geoespacial a AWS
 
 - **Spec**: ./spec.md
-- **Estado**: borrador <!-- borrador | aprobado -->
+- **Estado**: aprobado <!-- borrador | aprobado -->
 - **Fecha**: 2026-10-10
 - **Investigación**: ./research.md
 
@@ -188,7 +188,7 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 - **Motivo**: tras un desaprovisionamiento el repositorio ECR no existe y el push fallaría. El cambio de orden no altera lo que pide RF-012 (nada se despliega si fallan las pruebas o el esquema). La task definition del esquema puede registrarse con un tag que aún no existe.
 
 ### D-005: Importación con bloques `import` de un solo uso + inventario en Markdown
-- **Decisión**: `infra/platform/imports.tf` importa en la primera ejecución el repositorio ECR (y su regla de ciclo de vida, si existe), los dos roles de ECS, sus adjuntos de políticas gestionadas y la política en línea del rol de ejecución. Tras el primer `apply` correcto se elimina el fichero. `infra/INVENTARIO.md` lista cada recurso con su identificador en AWS, la dirección de Terraform y el bloque `import` para reimportarlo si se pierde el estado; también lista los recursos externos de arranque.
+- **Decisión**: `infra/platform/imports.tf` importa en la primera ejecución el repositorio ECR (y su regla de ciclo de vida, si existe), los dos roles de ECS, sus adjuntos de políticas gestionadas y la política en línea `read-project-secrets` del rol de ejecución (nombre confirmado por el usuario). Tras el primer `apply` correcto se elimina el fichero. `infra/INVENTARIO.md` lista cada recurso con su identificador en AWS, la dirección de Terraform y el bloque `import` para reimportarlo si se pierde el estado; también lista los recursos externos de arranque.
 - **Alternativas consideradas**: dejar los bloques `import` permanentes; `terraform import` manual por CLI.
 - **Motivo**: un bloque `import` permanente falla después de un desaprovisionamiento (el recurso ya no existe), lo que rompería HU-2 criterio 4. El CLI no deja rastro en el repositorio.
 
@@ -275,7 +275,7 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 
 | Riesgo | Impacto | Mitigación |
 |---|---|---|
-| El primer `plan`/`apply` real solo puede ocurrir en `main` (la confianza OIDC exige `main` y no hay `terraform`/`aws` en local) | Errores de IAM o de configuración se descubren tras el merge | Todo lo verificable sin credenciales corre en el job `test`. Opcional: instalar `terraform` y `awscli` en local con credenciales de administrador para un `plan` antes del merge. Corregir con commits pequeños a `main`. |
+| El primer `plan`/`apply` real solo puede ocurrir en `main` (la confianza OIDC exige `main` y no hay `terraform`/`aws` en local) | Errores de IAM o de configuración se descubren tras el merge | Decisión del usuario: Terraform se ejecuta solo desde GitHub Actions (sin `plan` local). Todo lo verificable sin credenciales corre en el job `test`; los fallos del primer apply se corrigen con commits pequeños a `main`. |
 | `aws_ecs_express_gateway_service` es reciente (nov. 2025): posibles bugs o diferencias en el proveedor | El stack service no aplica | `wait_for_steady_state`; fijar la versión del proveedor; plan B documentado: desplegar con `amazon-ecs-deploy-express-service` y dejar el resto en Terraform (revierte D-002). |
 | Permisos IAM insuficientes (p. ej. KMS al crear el secreto maestro, capacity providers del clúster) | `AccessDenied` en el primer apply | Mensajes de error claros en el log; añadir la acción concreta a `github-terraform-policy.json` (versionada en `infra/bootstrap/`) y aplicarla a mano. |
 | Las políticas en línea reales de los roles importados no coinciden con el código (nombres desconocidos) | El primer plan muestra cambios o falla la importación | T de inventario: el usuario lista `aws iam list-role-policies` / consola y se ajustan `imports.tf` e `INVENTARIO.md` antes del primer apply. |

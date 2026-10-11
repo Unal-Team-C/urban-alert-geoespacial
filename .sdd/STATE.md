@@ -6,13 +6,13 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: plan
+fase: tasks
 tarea_actual: -
 estado_tarea: -
 
 ## Siguiente paso
 
-El usuario revisa y aprueba specs/002-migracion-aws/plan.md (decisiones a validar: D-001 dos stacks, D-002 Express en Terraform, D-003 tarea ECS para el esquema, D-004 orden, D-005 imports de un solo uso, D-016 tamaños). Con la aprobación: `Estado: aprobado` en el plan → `/sdd-tasks`.
+Ejecutar `/sdd-tasks` para specs/002-migracion-aws (plan aprobado 2026-10-10).
 
 ## Contexto de trabajo
 

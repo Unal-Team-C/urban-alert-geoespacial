@@ -38,3 +38,10 @@
 - D-005 imports.tf de un solo uso + infra/INVENTARIO.md; D-006 VPC predeterminada; D-007 maestro gestionado por RDS + secreto propio de la app; D-008 sslmode=require; D-009 logs JSON stdlib; D-010 uvicorn graceful 20 s; D-011 X86_64.
 - D-012/D-013 deprovision con input de confirmación, sin GitHub environments; D-015 precondición pool×tareas ≤ 50; D-019 clúster propio.
 - GitHub: solo AWS_ROLE_ARN + AWS_REGION; el resto de variables antiguas sobra. Investigación en research.md.
+
+## 2026-10-10 · 002-migracion-aws · Ajustes al plan
+- Terraform solo desde GitHub Actions (sin plan local): riesgo del primer apply en `main` aceptado.
+- Política en línea del rol de ejecución: `read-project-secrets` (para imports.tf/INVENTARIO.md). Pendiente confirmar dónde están adjuntas `github-actions-urban-alert-terraform` y `github-actions-urban-alertPolicy` (deben ir en el rol de GitHub, no en los de ECS).
+
+## 2026-10-10 · 002-migracion-aws · Plan aprobado
+- El usuario respondió «Adelante»: plan aprobado; se asume la asignación de políticas confirmada (las dos de GitHub en el rol de GitHub; `read-project-secrets` en el rol de ejecución).
