@@ -194,3 +194,8 @@
 - Falla: creación de aws_ecs_express_gateway_service a los ~20 s con «No rollback candidate was found to run the rollback» (primer despliegue fallido; sin causa visible en el log de Terraform).
 - Hipótesis principal: al pasar security_groups, Express no crea su SG de servicio y el SG de tareas no admite el puerto 8000 desde el ALB interno. Corrección: regla de entrada 8000 desde el CIDR de la VPC (SSM vpc-cidr) en el SG de tareas.
 - Visibilidad: scripts/diagnose-service.sh + paso en provision.yml que, si falla el servicio, imprime eventos, despliegues, tareas paradas con motivo y últimos logs.
+
+## 2026-10-11 · 002-migracion-aws · T037: tercer Provision (run 38110707017)
+- OK: el servicio Express se desplegó (la regla de entrada 8000 desde la VPC resolvió el fallo anterior); endpoint ur-eb986c52ed3b435aa5a42dd4655bb6ff.ecs.us-east-2.on.aws.
+- Falla: buscar-listener-express.sh (copiado de la plataforma) no encuentra target group: DescribeServices no devuelve loadBalancers para un servicio Express. El paso no falló porque `echo "arn=$(...)"` oculta el error; routes falló después por express_listener_arn vacío.
+- Corrección: el script busca, si la vía de la plataforma está vacía, el listener 443 de un ALB interno con regla host-header = endpoint (reintentos); recibe el endpoint como tercer argumento; prueba con aws simulado (scripts/tests/test-buscar-listener.sh); el paso asigna antes de escribir la salida para fallar si el script falla. Avisar a la plataforma: su script no funciona con Express real.

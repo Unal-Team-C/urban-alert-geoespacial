@@ -31,7 +31,9 @@ jobs:
         run: docker compose --profile test run --rm --build tests
 
       - name: Script tests
-        run: bash scripts/tests/test-check-platform.sh
+        run: |
+          bash scripts/tests/test-check-platform.sh
+          bash scripts/tests/test-buscar-listener.sh
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -145,7 +147,12 @@ jobs:
         env:
           CLUSTER: ${{ steps.service.outputs.cluster }}
           SERVICE: ${{ steps.service.outputs.name }}
-        run: echo "arn=$(scripts/buscar-listener-express.sh "$CLUSTER" "$SERVICE")" >> "$GITHUB_OUTPUT"
+          ENDPOINT: ${{ steps.service.outputs.endpoint }}
+        run: |
+          # Assigning first makes the step fail when the script fails (a failing $(...) inside echo would not).
+          arn="$(scripts/buscar-listener-express.sh "$CLUSTER" "$SERVICE" "$ENDPOINT")"
+          echo "Listener: $arn"
+          echo "arn=$arn" >> "$GITHUB_OUTPUT"
 
       - name: Apply routes in the shared API Gateway
         id: routes
