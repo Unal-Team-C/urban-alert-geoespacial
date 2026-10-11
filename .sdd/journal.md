@@ -61,3 +61,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T003 hecha
 - infra/INVENTARIO.md: 6 recursos importados (ECR, 2 roles, 2 adjuntos, read-project-secrets) con ID/dirección/bloque import; recursos que crea Terraform; arranque como no gestionado. La regla de ciclo de vida de ECR no se importa (PutLifecyclePolicy sobrescribe). Verificado: cada importado tiene las tres columnas.
+
+## 2026-10-10 · 002-migracion-aws · T004 hecha
+- tests/unit/test_observability.py: formateador (campos base, extras, excepción en una línea, extras no serializables), configure_logging (root + uvicorn), middleware (una línea por petición, sin query string, 500 como ERROR). Verificado: falla solo por ModuleNotFoundError: app.observability.
