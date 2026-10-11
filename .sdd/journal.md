@@ -70,3 +70,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T006 hecha
 - tests/integration/test_shutdown.py + slow_app.py: uvicorn en subproceso con los flags del CMD, petición lenta en curso + SIGTERM. Hallazgo: uvicorn reemite la señal capturada tras el apagado, así que el código de salida limpio es -15 (143 en ECS), no 0; la prueba acepta 0 o -SIGTERM. Verificado: la petición termina con 200 y la prueba falla solo en el log 'database pool closed'.
+
+## 2026-10-10 · 002-migracion-aws · T007 hecha
+- app/observability.py (JsonFormatter, configure_logging, AccessLogMiddleware ASGI puro, sin query string, 5xx como ERROR); app/main.py lo registra; app/db/pool.py registra 'database pool closed'. Verificado: pytest tests/unit 57 passed; integración (sin test_migrate) 27 passed — test_shutdown ya pasa porque el log de cierre se añadió aquí.

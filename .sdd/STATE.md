@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T007
+tarea_actual: T008
 estado_tarea: -
 
 ## Siguiente paso
 
-T007: implementar app/observability.py (JsonFormatter, configure_logging, AccessLogMiddleware ASGI puro) y registrarlo en app/main.py; log 'database pool closed' en close_pool.
+T008: implementar app/db/migrate.py (MigrationSettings.from_env, migrate()), COPY db/schema.sql en el Dockerfile (adelantado de T009 para poder verificar).
 
 ## Contexto de trabajo
 
