@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T013
+tarea_actual: T014
 estado_tarea: -
 
 ## Siguiente paso
 
-T013: ecs.tf (clúster), logs.tf (2 grupos, 30 días), schema_task.tf (Fargate X86_64, migrate, secretos), outputs.tf.
+T014: infra/platform/imports.tf con los 6 bloques import del inventario.
 
 ## Contexto de trabajo
 

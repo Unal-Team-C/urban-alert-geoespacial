@@ -88,3 +88,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T012 hecha
 - rds.tf: subnet group de las subredes predeterminadas; PG var.db_engine_version, micro, gp3 20→50, cifrada, Single-AZ, privada, SG rds, backups 7 días, manage_master_user_password, deletion_protection = !allow_destroy, snapshot final ${name}-final-${suffix}. secrets.tf: random_password (32, sin símbolos), secreto ${name}-db con username/password/host/port/dbname/DATABASE_URL (?sslmode=require), recovery_window 0. Verificado: validate «Success», fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T013 hecha
+- ecs.tf (clúster ${name}), logs.tf (/ecs/${name} y /ecs/${name}-schema, 30 días), schema_task.tf (Fargate X86_64 256/512, imagen ECR:${image_tag}, python -m app.db.migrate, env DB_*, secretos username/password del maestro y password de la app, awslogs), outputs.tf (los 6 del plan + region, name, roles, app_secret_arn, service_log_group, schema_container_name para el stack service y el script). Verificado: validate «Success», fmt limpio.
