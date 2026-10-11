@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T035
+tarea_actual: T036
 estado_tarea: -
 
 ## Siguiente paso
 
-T035: deprovision.yml v2 (routes → service → base).
+T036: documentación v2 (README, INVENTARIO, bootstrap README).
 
 ## Contexto de trabajo
 
