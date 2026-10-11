@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T016
+tarea_actual: T017
 estado_tarea: -
 
 ## Siguiente paso
 
-T016: crear infra/service (backend, remote_state de platform, aws_ecs_express_gateway_service con precondición de conexiones, salida service_url).
+T017: infra/service/tests/service.tftest.hcl (presupuesto 5×10 ok / 6×10 falla, puerto, /health, DATABASE_URL como secreto).
 
 ## Contexto de trabajo
 

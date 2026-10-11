@@ -97,3 +97,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T015 hecha
 - infra/platform/tests/platform.tftest.hcl: 6 runs con mock_provider (protección por defecto, RDS privada/cifrada/backups/maestro gestionado, SG solo desde tareas en 5432, secreto con TLS y recovery 0, allow_destroy con nombre de snapshot, validación del prefijo). Hallazgo: los recursos con bloque import necesitan override_resource en las pruebas (no se pueden importar de un mock). Verificado: terraform test 6 passed.
+
+## 2026-10-10 · 002-migracion-aws · T016 hecha
+- infra/service: versions, backend (geoespacial/service.tfstate), providers, variables, tfvars (512/1024, 8000, /health, 1–10 tareas, CPU 60 %, pool 1/5, radio 6000), main.tf (terraform_remote_state de platform; aws_ecs_express_gateway_service con red, logs, entorno, secreto DATABASE_URL, scaling, wait_for_steady_state y precondición pool×tareas ≤ 50), outputs (service_arn, service_url con https://). Verificado: init resuelve aws v6.68.0, que incluye aws_ecs_express_gateway_service; validate «Success».
