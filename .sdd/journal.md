@@ -109,3 +109,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T019 hecha
 - .terraform.lock.hcl de platform (aws 6.68.0 + random) y service (aws 6.68.0) con hashes para linux_amd64, linux_arm64 y darwin_arm64. Verificado: init -backend=false -lockfile=readonly OK en ambos; fmt -check limpio.
+
+## 2026-10-10 · 002-migracion-aws · T020 hecha
+- .github/workflows/provision.yml: push a main; concurrency urban-alert-geoespacial-aws sin cancelar; job test (compose, fmt, validate+test de ambos stacks con lockfile readonly, actionlint 1.7.7); job provision (OIDC, apply platform con image_tag=SHA, salidas, login ECR, build linux/amd64 + push salvo tag existente, run-schema-task.sh, apply service, /health + consulta de cercanía con 30 reintentos, resumen con URL). Verificado: actionlint sin errores (incluye shellcheck de los run), sin aws-access-key-id, orden = D-004.

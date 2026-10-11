@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T020
+tarea_actual: T021
 estado_tarea: -
 
 ## Siguiente paso
 
-T020: .github/workflows/provision.yml (test + provision en el orden de D-004); actionlint.
+T021: .github/workflows/deprovision.yml (confirmación, destroy service, apply allow_destroy, destroy platform).
 
 ## Contexto de trabajo
 

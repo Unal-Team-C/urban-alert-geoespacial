@@ -1,0 +1,149 @@
+# Provisioning (spec 002, RF-012): every push to main tests, provisions and deploys.
+# Order (plan D-004): tests → platform → image → schema → service → health check.
+name: Provision
+
+on:
+  push:
+    branches: [main]
+
+# Shared with deprovision.yml: runs touching the same infrastructure queue up instead of overlapping (RF-015).
+concurrency:
+  group: urban-alert-geoespacial-aws
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: 1.16.5
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  test:
+    name: Tests and static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit and integration tests (PostGIS in compose)
+        run: docker compose --profile test run --rm --build tests
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform format
+        run: terraform fmt -check -recursive infra
+
+      - name: Terraform validate and test (mocked providers)
+        run: |
+          for stack in platform service; do
+            terraform -chdir="infra/$stack" init -backend=false -input=false -lockfile=readonly
+            terraform -chdir="infra/$stack" validate
+            terraform -chdir="infra/$stack" test
+          done
+
+      - name: Lint workflows
+        run: docker run --rm -v "$PWD:/repo" -w /repo docker.io/rhysd/actionlint:1.7.7 -color
+
+  provision:
+    name: Provision and deploy
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC: temporary AWS credentials, no stored keys (RF-014)
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Apply platform (ECR, roles, network, RDS, secret, logs, schema task)
+        run: |
+          terraform -chdir=infra/platform init -input=false
+          terraform -chdir=infra/platform apply -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
+
+      - name: Read platform outputs
+        id: platform
+        run: |
+          out() { terraform -chdir=infra/platform output -raw "$1"; }
+          {
+            echo "name=$(out name)"
+            echo "ecr_url=$(out ecr_repository_url)"
+            echo "cluster=$(out cluster_name)"
+            echo "schema_task=$(out schema_task_definition_arn)"
+            echo "schema_container=$(out schema_container_name)"
+            echo "schema_log_group=$(out schema_log_group)"
+            echo "tasks_sg=$(out tasks_security_group_id)"
+            echo "subnets=$(terraform -chdir=infra/platform output -json subnet_ids | jq -r 'join(",")')"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image (tag = commit SHA)
+        env:
+          REPOSITORY: ${{ steps.platform.outputs.name }}
+          IMAGE: ${{ steps.platform.outputs.ecr_url }}:${{ env.IMAGE_TAG }}
+        run: |
+          # Tags are immutable: a re-run of the same commit reuses the image already pushed.
+          if aws ecr describe-images --repository-name "$REPOSITORY" --image-ids "imageTag=$IMAGE_TAG" >/dev/null 2>&1; then
+            echo "Image $IMAGE already exists, skipping build."
+          else
+            docker build --platform linux/amd64 --target runtime -t "$IMAGE" .
+            docker push "$IMAGE"
+          fi
+
+      - name: Apply database schema (one-off ECS task)
+        env:
+          CLUSTER: ${{ steps.platform.outputs.cluster }}
+          TASK_DEFINITION: ${{ steps.platform.outputs.schema_task }}
+          SUBNETS: ${{ steps.platform.outputs.subnets }}
+          SECURITY_GROUP: ${{ steps.platform.outputs.tasks_sg }}
+          LOG_GROUP: ${{ steps.platform.outputs.schema_log_group }}
+          CONTAINER: ${{ steps.platform.outputs.schema_container }}
+        run: scripts/run-schema-task.sh
+
+      - name: Apply service (ECS Express Mode)
+        run: |
+          terraform -chdir=infra/service init -input=false
+          terraform -chdir=infra/service apply -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
+
+      - name: Health check on the public URL
+        id: health
+        run: |
+          url=$(terraform -chdir=infra/service output -raw service_url)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 5 "$url/health"; then
+              echo
+              curl -fsS --max-time 10 "$url/api/v1/geospatial/reports?lat=4.6486&lon=-74.0628&radius=1000" >/dev/null
+              echo "Service healthy at $url"
+              exit 0
+            fi
+            echo "Attempt $attempt: not healthy yet"
+            sleep 10
+          done
+          echo "::error::$url/health did not answer 200 within 5 minutes"
+          exit 1
+
+      - name: Summary
+        if: always()
+        env:
+          URL: ${{ steps.health.outputs.url }}
+        run: |
+          {
+            echo "### Servicio Geoespacial"
+            echo "- Commit: \`$IMAGE_TAG\`"
+            echo "- URL: ${URL:-(no disponible)}"
+          } >> "$GITHUB_STEP_SUMMARY"
