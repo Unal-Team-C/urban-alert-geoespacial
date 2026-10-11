@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T018
+tarea_actual: T019
 estado_tarea: -
 
 ## Siguiente paso
 
-T018: scripts/run-schema-task.sh (run-task, wait tasks-stopped, logs, exit code).
+T019: lockfiles multiplataforma (linux_amd64, linux_arm64, darwin_arm64) en ambos stacks + fmt.
 
 ## Contexto de trabajo
 

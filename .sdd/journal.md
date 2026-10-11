@@ -103,3 +103,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T017 hecha
 - infra/service/tests/service.tftest.hcl: mock_provider + override_data del remote_state; 4 runs (puerto 8000, /health, imagen ECR:SHA; DATABASE_URL desde el secreto y nunca en environment; DB_POOL_MAX=5 y 5×10 ≤ 50; 6×10 rechazado por la precondición). Verificado: terraform test 4 passed.
+
+## 2026-10-10 · 002-migracion-aws · T018 hecha
+- scripts/run-schema-task.sh: run-task Fargate con assignPublicIp=ENABLED, error si no arranca (failures), wait tasks-stopped, imprime logs (stream schema/schema/<id>), sale con el exitCode del contenedor o 1 si no llegó a ejecutarse (stoppedReason). Variables: CLUSTER, TASK_DEFINITION, SUBNETS, SECURITY_GROUP, LOG_GROUP, CONTAINER. Verificado: bash -n y shellcheck sin avisos.
