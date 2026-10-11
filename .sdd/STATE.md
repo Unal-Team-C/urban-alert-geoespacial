@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T027
+tarea_actual: T028
 estado_tarea: -
 
 ## Siguiente paso
 
-T027: red desde SSM en infra/base (network.tf, rds.tf, outputs) + override_data en base.tftest.hcl.
+T028: copiar buscar-listener-express.sh; crear check-platform.sh + scripts/tests/test-check-platform.sh con aws simulado.
 
 ## Contexto de trabajo
 

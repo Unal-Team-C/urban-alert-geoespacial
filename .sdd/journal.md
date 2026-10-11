@@ -153,3 +153,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T026 hecha
 - git mv infra/platform → infra/base (y tests/base.tftest.hcl); backend geoespacial/base.tfstate; Stack=base; service lee terraform_remote_state "base"; workflows, README, INVENTARIO, CLAUDE.md, bootstrap y run-schema-task.sh actualizados. Verificado: validate+test base (6) y service (4) en verde, fmt limpio, actionlint OK; grep de infra/platform y platform.tfstate sin resultados fuera de specs/.sdd.
+
+## 2026-10-10 · 002-migracion-aws · T027 hecha
+- infra/base/network.tf: data aws_ssm_parameter /urban-alert/plataforma/vpc-id y subredes-privadas (nonsensitive: los IDs no son secretos, el proveedor marca todo SSM como sensible); SG en esa VPC; rds.tf subnet group = subredes privadas; outputs subnet_ids (todas) y vpc_id. Prueba nueva uses_the_shared_private_network con override_data. Verificado: base test 7 passed, service 4 passed, fmt limpio.

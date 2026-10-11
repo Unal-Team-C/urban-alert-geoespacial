@@ -16,7 +16,12 @@ output "cluster_name" {
 }
 
 output "subnet_ids" {
-  value = data.aws_subnets.default.ids
+  description = "All private subnets of the shared platform (Express needs every zone, platform guide §2)."
+  value       = local.private_subnets
+}
+
+output "vpc_id" {
+  value = local.vpc_id
 }
 
 output "tasks_security_group_id" {

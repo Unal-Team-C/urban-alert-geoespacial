@@ -1,6 +1,6 @@
 resource "aws_db_subnet_group" "this" {
   name       = "${var.name}-db"
-  subnet_ids = data.aws_subnets.default.ids
+  subnet_ids = local.private_subnets
 }
 
 # PostgreSQL + PostGIS (the extension is created by the schema task). Private, encrypted, TLS enforced by the
