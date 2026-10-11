@@ -132,3 +132,6 @@
 - El repo usa el subject inmutable de GitHub: `repo:Unal-Team-C@335834608/urban-alert-geoespacial@1413702275:ref:refs/heads/main` (API oidc/customization/sub: use_immutable_subject=true). La confianza del rol tenía `repo:Unal-Team-C/*`, que no casa con `Unal-Team-C@335834608/...`.
 - Corrección propuesta al usuario y versionada en infra/bootstrap/github-oidc-trust.json: `repo:Unal-Team-C@335834608/*:ref:refs/heads/main` (+ formato clásico).
 - El usuario decide crear un repo de plataforma compartida para las redes (y el API Gateway).
+
+## 2026-10-11 · general · Repo de plataforma compartida creado
+- github.com/Unal-Team-C/urban-alert-plataforma (privado), con arnés SDD; carpeta local «Migración a AWS/Plataforma compartida AWS». Su subject OIDC también es inmutable con el mismo ID de organización (335834608): la confianza corregida lo cubre.

@@ -12,7 +12,7 @@ estado_tarea: bloqueada
 
 ## Siguiente paso
 
-(1) Usuario comparte la relación de confianza del rol de GitHub para arreglar el AssumeRoleWithWebIdentity. (2) Actualizar spec/plan/tareas de 002 con la exposición por Amazon API Gateway compartido y servicio privado (ver journal 2026-10-11); decidir dónde vive el gateway compartido y NAT vs endpoints. No fusionar más cambios de infra hasta replanificar.
+(1) Usuario actualiza la confianza del rol de GitHub con infra/bootstrap/github-oidc-trust.json (subject inmutable `repo:Unal-Team-C@335834608/*`). (2) Especificar la plataforma compartida en el repo nuevo urban-alert-plataforma (local: «Migración a AWS/Plataforma compartida AWS»): VPC privada + salida + API Gateway + VPC Link. (3) Después, actualizar spec/plan/tareas de 002 para consumir esa plataforma (servicio privado, ruta en el gateway).
 
 ## Contexto de trabajo
 
@@ -31,5 +31,5 @@ estado_tarea: bloqueada
 
 ## Bloqueos / preguntas abiertas
 
-- T024: el rol OIDC rechaza el token de GitHub (confianza). Nada creado en AWS.
-- Cambio de requisitos (API Gateway compartido + servicio privado) pendiente de reflejar en spec/plan/tareas.
+- T024: confianza OIDC pendiente de actualizar en AWS por el usuario.
+- Cambio de requisitos (API Gateway compartido + servicio privado) pendiente de reflejar en spec/plan/tareas; depende de la plataforma compartida.
