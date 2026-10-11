@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyInsecureTransport",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::urban-alert-tfstate-348364742283",
+        "arn:aws:s3:::urban-alert-tfstate-348364742283/*"
+      ],
+      "Condition": {
+        "Bool": { "aws:SecureTransport": "false" }
+      }
+    }
+  ]
+}

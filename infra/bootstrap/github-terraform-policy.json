@@ -1,0 +1,152 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EcrRepositoriesManage",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:DescribeRepositories",
+        "ecr:CreateRepository",
+        "ecr:DeleteRepository",
+        "ecr:ListTagsForResource",
+        "ecr:TagResource",
+        "ecr:UntagResource",
+        "ecr:GetLifecyclePolicy",
+        "ecr:PutLifecyclePolicy",
+        "ecr:DeleteLifecyclePolicy",
+        "ecr:PutImageTagMutability",
+        "ecr:PutImageScanningConfiguration",
+        "ecr:GetRepositoryPolicy",
+        "ecr:ListImages",
+        "ecr:DescribeImages",
+        "ecr:BatchDeleteImage"
+      ],
+      "Resource": "arn:aws:ecr:us-east-2:348364742283:repository/urban-alert-*"
+    },
+    {
+      "Sid": "EcsLifecycleAndSchemaTask",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:DeleteExpressGatewayService",
+        "ecs:DeleteCluster",
+        "ecs:DescribeTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:ListTagsForResource",
+        "ecs:RunTask",
+        "ecs:DescribeTasks",
+        "ecs:StopTask",
+        "ecs:ListTasks"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IamManageProjectRoles",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:UpdateRole",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListRolePolicies",
+        "iam:GetRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:DetachRolePolicy",
+        "iam:ListInstanceProfilesForRole"
+      ],
+      "Resource": "arn:aws:iam::348364742283:role/urban-alert-*"
+    },
+    {
+      "Sid": "IamAttachOnlyEcsManagedPolicies",
+      "Effect": "Allow",
+      "Action": "iam:AttachRolePolicy",
+      "Resource": "arn:aws:iam::348364742283:role/urban-alert-*",
+      "Condition": {
+        "ArnEquals": {
+          "iam:PolicyARN": [
+            "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+            "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "IamReadManagedPolicies",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion"
+      ],
+      "Resource": "arn:aws:iam::aws:policy/*"
+    },
+    {
+      "Sid": "LogsProjectGroups",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:PutRetentionPolicy",
+        "logs:DeleteRetentionPolicy",
+        "logs:TagResource",
+        "logs:UntagResource",
+        "logs:ListTagsForResource",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:us-east-2:348364742283:log-group:/ecs/urban-alert-*",
+        "arn:aws:logs:us-east-2:348364742283:log-group:/ecs/urban-alert-*:*"
+      ]
+    },
+    {
+      "Sid": "LogsDescribe",
+      "Effect": "Allow",
+      "Action": "logs:DescribeLogGroups",
+      "Resource": "*"
+    },
+    {
+      "Sid": "SecretsProjectManage",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:UpdateSecret",
+        "secretsmanager:DeleteSecret",
+        "secretsmanager:RestoreSecret",
+        "secretsmanager:UntagResource",
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:ListSecretVersionIds"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-2:348364742283:secret:urban-alert-*"
+    },
+    {
+      "Sid": "SecretsRdsManagedMasterPassword",
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:CreateSecret",
+        "secretsmanager:TagResource",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:DeleteSecret",
+        "secretsmanager:RotateSecret"
+      ],
+      "Resource": "arn:aws:secretsmanager:us-east-2:348364742283:secret:rds!*"
+    },
+    {
+      "Sid": "Ec2Tags",
+      "Effect": "Allow",
+      "Action": "ec2:DeleteTags",
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcsServiceLinkedRole",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": { "iam:AWSServiceName": "ecs.amazonaws.com" }
+      }
+    }
+  ]
+}

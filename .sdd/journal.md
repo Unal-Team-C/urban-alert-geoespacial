@@ -55,3 +55,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T001 hecha
 - .dockerignore excluye infra/, .github/, scripts/. Verificado: podman build --target runtime OK; /srv solo contiene app y requirements.txt.
+
+## 2026-10-10 · 002-migracion-aws · T002 hecha
+- infra/bootstrap/: README (OIDC, rol de GitHub con sus dos políticas, bucket de estado, secretos/variables de GitHub) + 5 JSON (confianza, política de despliegue corregida, política de Terraform, política TLS y ciclo de vida del bucket). Verificado: json.tool sin errores.
