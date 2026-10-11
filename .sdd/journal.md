@@ -79,3 +79,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T009 hecha
 - Dockerfile: CMD en forma exec con --no-access-log --timeout-graceful-shutdown 20 --proxy-headers --forwarded-allow-ips *. Hallazgo y corrección: --no-access-log solo corta la propagación de uvicorn.access, y configure_logging la reactivaba (líneas de acceso duplicadas); ahora uvicorn.access queda sin handlers y sin propagar (app/observability.py). Verificado: suite 94 passed; docker-compose up --wait con api healthy; una sola línea JSON app.access por petición; contenedor como uid 10001.
+
+## 2026-10-10 · 002-migracion-aws · T010 hecha
+- infra/platform: versions (TF >=1.10 <2, aws ~>6.0, random ~>3.6), backend S3 (urban-alert-tfstate-348364742283, geoespacial/platform.tfstate, use_lockfile, encrypt), provider con default_tags, variables (validación de prefijo urban-alert- y backups >= 7), terraform.tfvars, network (VPC/subredes predeterminadas, SG tareas con salida, SG RDS con 5432 solo desde SG tareas). .gitignore con artefactos de Terraform. Verificado: init -backend=false + validate «Success» y fmt -check limpio con hashicorp/terraform:1.16.5 (podman).

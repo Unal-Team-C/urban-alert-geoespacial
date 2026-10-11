@@ -8,3 +8,10 @@ __pycache__/
 .pytest_cache/
 .venv/
 .DS_Store
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
