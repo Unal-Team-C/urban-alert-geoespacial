@@ -11,7 +11,10 @@ COPY db/schema.sql ./db/schema.sql
 RUN chmod -R a+rX /srv && useradd --create-home --uid 10001 appuser
 USER appuser
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Exec form keeps uvicorn as PID 1 so it receives SIGTERM from ECS; graceful timeout < ECS stopTimeout (30 s).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
+     "--no-access-log", "--timeout-graceful-shutdown", "20", \
+     "--proxy-headers", "--forwarded-allow-ips", "*"]
 
 FROM runtime AS test
 USER root

@@ -35,10 +35,14 @@ def configure_logging(level: int = logging.INFO) -> None:
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(level)
-    for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+    for name in ("uvicorn", "uvicorn.error"):
         logger = logging.getLogger(name)
         logger.handlers = []
         logger.propagate = True
+    # AccessLogMiddleware replaces uvicorn's access log; uvicorn's --no-access-log only stops it from propagating.
+    access = logging.getLogger("uvicorn.access")
+    access.handlers = []
+    access.propagate = False
 
 
 class AccessLogMiddleware:

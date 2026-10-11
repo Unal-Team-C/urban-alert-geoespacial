@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T009
+tarea_actual: T010
 estado_tarea: -
 
 ## Siguiente paso
 
-T009: ajustar CMD del Dockerfile (--no-access-log --timeout-graceful-shutdown 20 --proxy-headers --forwarded-allow-ips=*); verificar suite completa y docker-compose up healthy.
+T010: crear infra/platform base (versions, backend, providers, variables, tfvars, network con SGs); verificar init -backend=false + validate con hashicorp/terraform en podman.
 
 ## Contexto de trabajo
 

@@ -76,3 +76,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T008 hecha
 - app/db/migrate.py: MigrationSettings.from_env (DB_HOST/PORT/NAME, DB_ADMIN_*, DB_APP_*, DB_SSLMODE=require, SCHEMA_PATH), migrate() en una transacción, rol con format(%I/%L), REVOKE ALL + GRANT SELECT, INSERT; main() con logs JSON y exit 1 si falla. Desviación: el COPY de db/schema.sql al Dockerfile se adelantó de T009 para poder verificar; compose.yaml no necesitó cambios (la prueba deriva todo de DATABASE_URL). Verificado: test_migrate 10 passed; suite completa en verde.
+
+## 2026-10-10 · 002-migracion-aws · T009 hecha
+- Dockerfile: CMD en forma exec con --no-access-log --timeout-graceful-shutdown 20 --proxy-headers --forwarded-allow-ips *. Hallazgo y corrección: --no-access-log solo corta la propagación de uvicorn.access, y configure_logging la reactivaba (líneas de acceso duplicadas); ahora uvicorn.access queda sin handlers y sin propagar (app/observability.py). Verificado: suite 94 passed; docker-compose up --wait con api healthy; una sola línea JSON app.access por petición; contenedor como uid 10001.
