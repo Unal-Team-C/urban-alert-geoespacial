@@ -8,11 +8,11 @@
 feature_activa: 002-migracion-aws
 fase: implement
 tarea_actual: T024
-estado_tarea: -
+estado_tarea: en_progreso
 
 ## Siguiente paso
 
-T024 requiere al usuario: confirmar push de aws-provisioning y apertura del PR a main; al fusionar se ejecuta el primer Provision real (costes en AWS).
+T024: rama subida y PR aws-provisioning → main abierto; esperar a que el usuario lo fusione y seguir la primera ejecución de Provision (gh run watch); corregir fallos con commits pequeños a main.
 
 ## Contexto de trabajo
 
