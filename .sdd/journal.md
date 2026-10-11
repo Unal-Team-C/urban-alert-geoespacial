@@ -100,3 +100,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T016 hecha
 - infra/service: versions, backend (geoespacial/service.tfstate), providers, variables, tfvars (512/1024, 8000, /health, 1–10 tareas, CPU 60 %, pool 1/5, radio 6000), main.tf (terraform_remote_state de platform; aws_ecs_express_gateway_service con red, logs, entorno, secreto DATABASE_URL, scaling, wait_for_steady_state y precondición pool×tareas ≤ 50), outputs (service_arn, service_url con https://). Verificado: init resuelve aws v6.68.0, que incluye aws_ecs_express_gateway_service; validate «Success».
+
+## 2026-10-10 · 002-migracion-aws · T017 hecha
+- infra/service/tests/service.tftest.hcl: mock_provider + override_data del remote_state; 4 runs (puerto 8000, /health, imagen ECR:SHA; DATABASE_URL desde el secreto y nunca en environment; DB_POOL_MAX=5 y 5×10 ≤ 50; 6×10 rechazado por la precondición). Verificado: terraform test 4 passed.

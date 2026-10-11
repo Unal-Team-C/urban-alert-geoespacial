@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T017
+tarea_actual: T018
 estado_tarea: -
 
 ## Siguiente paso
 
-T017: infra/service/tests/service.tftest.hcl (presupuesto 5×10 ok / 6×10 falla, puerto, /health, DATABASE_URL como secreto).
+T018: scripts/run-schema-task.sh (run-task, wait tasks-stopped, logs, exit code).
 
 ## Contexto de trabajo
 
