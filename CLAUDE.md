@@ -10,9 +10,11 @@ para migrarlo a AWS con CI/CD en GitHub Actions. Python 3.13 + FastAPI + asyncpg
 
 AWS (spec `specs/002-migracion-aws/`): cuenta 348364742283, us-east-2. Terraform se aplica solo desde GitHub Actions.
 
-- `infra/base` (ECR, roles ECS, red, RDS, secreto, logs, clúster, task definition del esquema) e `infra/service` (ECS Express) con estado en `s3://urban-alert-tfstate-348364742283/geoespacial/`. Arranque manual e inventario: `infra/bootstrap/`, `infra/INVENTARIO.md`.
+- Se despliega sobre la plataforma compartida `Unal-Team-C/urban-alert-plataforma` (red privada + API Gateway; contrato en SSM `/urban-alert/plataforma/`, guía `docs/integracion.md` de ese repo). Sin URL pública propia.
+- `infra/base` (ECR, roles ECS, SG, RDS, secreto, logs, clúster, task definition del esquema), `infra/service` (ECS Express, ALB interno) e `infra/routes` (rutas en el gateway) con estado en `s3://urban-alert-tfstate-348364742283/geoespacial/`. Arranque manual e inventario: `infra/bootstrap/`, `infra/INVENTARIO.md`.
 - Workflows: `.github/workflows/provision.yml` (push a `main`) y `deprovision.yml` (manual, confirmación `urban-alert-geoespacial`).
 - Esquema en la nube: `python -m app.db.migrate` (tarea ECS lanzada por `scripts/run-schema-task.sh`).
+- Scripts: `check-platform.sh` (falla si no hay plataforma), `buscar-listener-express.sh` (copiado de la plataforma), `smoke-gateway-geoespacial.sh`; pruebas en `scripts/tests/`.
 - Validación local sin instalar nada (Podman):
   - `podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/<stack> init -backend=false` y luego `validate` / `test`; `fmt -check -recursive infra`
   - `podman run --rm -v "$PWD":/repo -w /repo docker.io/rhysd/actionlint:1.7.7`

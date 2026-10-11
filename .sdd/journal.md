@@ -180,3 +180,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T035 hecha
 - deprovision.yml v2: tras la confirmación, Destroy routes (salta si vacío; variables de relleno que pasan las validaciones) → Destroy service → Lift protection → Destroy base; comentario de cabecera: no toca la plataforma ni el arranque. Nota: destruir routes lee SSM de la plataforma, así que debe hacerse antes de desaprovisionar la plataforma (la plataforma ya se niega si hay rutas). Verificado: actionlint sin errores; la confirmación sigue siendo el primer paso.
+
+## 2026-10-10 · 002-migracion-aws · T036 hecha
+- README: sección «Despliegue en AWS» v2 (plataforma compartida y SSM, diagrama, tabla de piezas con ALB interno, tabla de rutas pública/interna, qué necesita Reportes: execute-api:Invoke + SigV4, arranque con paso de la plataforma, workflows v2, orden de Deprovision respecto a la plataforma, costes); INVENTARIO (base en la VPC compartida, stack routes, política de la plataforma, sección 4 plataforma externa); bootstrap README (política github-actions-urban-alert-platform); CLAUDE.md. Verificado: los cuatro puntos de RF-017 v2 presentes y enlazados; suite completa: pytest 94, terraform test base 7/service 6/routes 6, fmt, actionlint, shellcheck y pruebas de scripts en verde.

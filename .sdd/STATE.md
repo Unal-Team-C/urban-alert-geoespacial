@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T036
+tarea_actual: T037
 estado_tarea: -
 
 ## Siguiente paso
 
-T036: documentación v2 (README, INVENTARIO, bootstrap README).
+T037: pedir confirmación al usuario para subir aws-provisioning y abrir el PR a main; él lo fusiona y se sigue el primer Provision v2.
 
 ## Contexto de trabajo
 

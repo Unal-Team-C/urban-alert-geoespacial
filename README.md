@@ -1,6 +1,6 @@
 # UrbanAlert — Servicio Geoespacial
 
-Microservicio de UrbanAlert que registra la ubicación de cada reporte de daño urbano y responde qué reportes hay cerca de un punto del mapa. Está hecho con **Python 3.13 + FastAPI** y usa una base **PostgreSQL + PostGIS** propia. Se ejecuta en local con contenedores y se despliega en AWS (ECS Express Mode + RDS) con GitHub Actions y Terraform; no usa cola de mensajes.
+Microservicio de UrbanAlert que registra la ubicación de cada reporte de daño urbano y responde qué reportes hay cerca de un punto del mapa. Está hecho con **Python 3.13 + FastAPI** y usa una base **PostgreSQL + PostGIS** propia. Se ejecuta en local con contenedores y se despliega en AWS (ECS Express Mode + RDS, expuesto por el API Gateway compartido) con GitHub Actions y Terraform; no usa cola de mensajes.
 
 - Especificación, plan, tareas y verificación (desarrollado con SDD): [docs/](docs/) — [spec](docs/spec.md) · [plan](docs/plan.md) · [verify](docs/verify.md)
 - Documentación interactiva (OpenAPI), con el servicio arriba: <http://localhost:8000/docs>
@@ -150,24 +150,46 @@ En AWS se usa `DB_POOL_MAX=5` con un máximo de 10 tareas, y Terraform rechaza c
 
 Cuenta `348364742283`, región `us-east-2`. Todo lo que no es de arranque está en Terraform ([infra/](infra/)) y se aplica solo desde GitHub Actions.
 
+El servicio se despliega sobre la **plataforma compartida** de UrbanAlert ([Unal-Team-C/urban-alert-plataforma](https://github.com/Unal-Team-C/urban-alert-plataforma)): su red privada (VPC, subredes privadas, NAT) y su **API Gateway**, que es la única entrada desde internet. Los identificadores se leen en cada despliegue de SSM (`/urban-alert/plataforma/`); guía de integración: `docs/integracion.md` de ese repo.
+
 ```text
-push a main ─► Provision: pruebas ─► Terraform base ─► imagen :<sha> en ECR ─► tarea ECS del esquema ─► Terraform service ─► /health
-                                     (ECR, roles, red, RDS,                         (db/schema.sql +       (ECS Express Mode:
-                                      secreto, logs, clúster)                        rol geospatial_app)     ALB + HTTPS + autoscaling)
+Internet ─► API Gateway compartido ─(VPC Link)─► ALB interno de ECS Express ─► tareas (subredes privadas) ─► RDS
+             /api/v1/geoespacial/*                  Host = <servicio>.ecs.us-east-2.on.aws          (salida a internet por el NAT de la plataforma)
+
+push a main ─► Provision: pruebas ─► ¿plataforma? ─► base ─► imagen :<sha> ─► esquema ─► service ─► listener ─► routes ─► humo por el gateway
 ```
 
 | Pieza | Dónde |
 |---|---|
-| Base de datos | RDS PostgreSQL 17 + PostGIS, `db.t4g.micro`, privada, cifrada, TLS obligatorio, backups 7 días, protección contra borrado. Solo el esquema, sin datos semilla. |
-| Servicio | ECS Express Mode (Fargate, X86_64), 0,5 vCPU / 1 GiB, 1–10 tareas por CPU al 60 %. URL pública HTTPS: en el resumen de cada ejecución de *Provision* |
+| Base de datos | RDS PostgreSQL 17 + PostGIS, `db.t4g.micro`, en las subredes privadas, cifrada, TLS obligatorio, backups 7 días, protección contra borrado. Solo el esquema, sin datos semilla. |
+| Servicio | ECS Express Mode (Fargate, X86_64), 0,5 vCPU / 1 GiB, 1–10 tareas por CPU al 60 %. Balanceador **interno**, tareas sin IP pública: no tiene URL pública propia. |
+| Rutas | En el API Gateway compartido (stack `infra/routes`), ver la tabla siguiente |
 | Credenciales | La aplicación usa el rol `geospatial_app` (solo `SELECT`, `INSERT`); su `DATABASE_URL` está en Secrets Manager (`urban-alert-geoespacial-db`). El usuario maestro lo gestiona RDS. |
 | Logs | CloudWatch: `/ecs/urban-alert-geoespacial` (servicio, JSON por línea) y `/ecs/urban-alert-geoespacial-schema` (migraciones), 30 días |
-| Estado de Terraform | `s3://urban-alert-tfstate-348364742283/geoespacial/{base,service}.tfstate` |
+| Estado de Terraform | `s3://urban-alert-tfstate-348364742283/geoespacial/{base,service,routes}.tfstate` |
+
+### Rutas en el API Gateway
+
+URL del gateway: parámetro `/urban-alert/plataforma/api-endpoint` (también en el resumen de cada ejecución de *Provision*).
+
+| Ruta del gateway | Ruta del servicio | Acceso |
+|---|---|---|
+| `GET /api/v1/geoespacial/reports?lat=&lon=&radius=` | `GET /api/v1/geospatial/reports` | Pública |
+| `GET /api/v1/geoespacial/coordinates/{id}` | `GET /api/v1/geospatial/coordinates/{id}` | Pública |
+| `POST /api/v1/geoespacial/coordinates` | `POST /api/v1/geospatial/coordinates` | **Interna**: petición firmada con IAM; sin firma, 403 |
+
+Cualquier otra ruta (incluida `/health`, que solo usa el balanceador) responde 404. Las respuestas, errores y cabecera `Location` son las del servicio (rutas internas `/api/v1/geospatial/...`); el servicio recibe como `Host` su dominio `.on.aws`.
+
+**Qué necesita Reportes para asignar localizaciones** (se configura en su repo):
+
+1. En su rol de tarea, `execute-api:Invoke` sobre `<api-execution-arn>/$default/POST/api/v1/geoespacial/coordinates` (`api-execution-arn` en SSM).
+2. Firmar cada petición con SigV4 (servicio `execute-api`, región `us-east-2`) con las credenciales de su rol de tarea, por ejemplo con `Aws4RequestSigner`/`AWS4Signer` del SDK de .NET.
 
 ### Antes del primer despliegue (una sola vez)
 
-1. Crear los recursos de arranque: proveedor OIDC de GitHub, rol de los workflows con sus dos políticas y bucket del estado. Pasos y JSON en [infra/bootstrap/README.md](infra/bootstrap/README.md).
-2. En GitHub → Settings → Secrets and variables → Actions:
+1. Crear los recursos de arranque: proveedor OIDC de GitHub, rol de los workflows con sus políticas y bucket del estado. Pasos y JSON en [infra/bootstrap/README.md](infra/bootstrap/README.md).
+2. Aprovisionar la plataforma compartida (workflow *Provision* de `urban-alert-plataforma`). Si no existe, el *Provision* de este repo falla al principio sin cambiar nada.
+3. En GitHub → Settings → Secrets and variables → Actions:
 
    | Tipo | Nombre | Ejemplo |
    |---|---|---|
@@ -182,14 +204,14 @@ Los recursos que se crearon a mano antes del código (ECR y roles de ECS) se imp
 
 | Workflow | Cuándo | Qué hace |
 |---|---|---|
-| [Provision](.github/workflows/provision.yml) | Cada push a `main` | Pruebas (Python, `terraform fmt/validate/test`, actionlint) → aplica `infra/base` → construye y sube la imagen con el SHA del commit → aplica `db/schema.sql` con una tarea ECS dentro de la VPC → aplica `infra/service` → comprueba `/health`. Si un paso falla, los siguientes no se ejecutan. |
-| [Deprovision](.github/workflows/deprovision.yml) | A mano: Actions → Deprovision → Run workflow (rama `main`), escribiendo `urban-alert-geoespacial` | Destruye el servicio, quita la protección de la base, deja una copia final `urban-alert-geoespacial-final-<run_id>` y destruye la plataforma. No toca los recursos de arranque. |
+| [Provision](.github/workflows/provision.yml) | Cada push a `main` | Pruebas (Python, scripts, `terraform fmt/validate/test` de los tres stacks, actionlint) → comprueba que la plataforma existe → aplica `infra/base` → construye y sube la imagen con el SHA del commit → aplica `db/schema.sql` con una tarea ECS en las subredes privadas → aplica `infra/service` → busca el listener del balanceador interno → aplica `infra/routes` → prueba de humo por el gateway. Si un paso falla, los siguientes no se ejecutan. |
+| [Deprovision](.github/workflows/deprovision.yml) | A mano: Actions → Deprovision → Run workflow (rama `main`), escribiendo `urban-alert-geoespacial` | Quita las rutas del gateway, destruye el servicio, quita la protección de la base, deja una copia final `urban-alert-geoespacial-final-<run_id>` y destruye el stack `base`. No toca la plataforma compartida ni los recursos de arranque. Hay que lanzarlo **antes** que el *Deprovision* de la plataforma. |
 
 Los dos comparten un grupo de concurrencia: nunca se ejecutan a la vez. El rol de AWS solo confía en `main`, así que desde otras ramas no obtienen credenciales.
 
 ### Costes y desaprovisionamiento
 
-Con el entorno encendido, el coste aproximado es el balanceador (~16–20 USD/mes), la instancia `db.t4g.micro` y una tarea Fargate. Cuando no se use, lanzar **Deprovision**; un nuevo push a `main` recrea todo con la base vacía.
+Con el entorno encendido, el coste propio del servicio es el balanceador interno de Express (~16–20 USD/mes, compartido con otros servicios Express de la VPC), la instancia `db.t4g.micro` y una tarea Fargate; el NAT y el gateway los paga la plataforma. Cuando no se use, lanzar **Deprovision**; un nuevo push a `main` recrea todo con la base vacía.
 
 - **Restaurar la copia final**: RDS → Snapshots → `urban-alert-geoespacial-final-<run_id>` → Restore. La instancia restaurada queda fuera de Terraform; para volver a gestionarla hay que importarla en lugar de la nueva.
 - **Borrar copias antiguas** (cuestan almacenamiento):
@@ -208,6 +230,8 @@ podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=i
 podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/base test
 ```
 
+Igual para `infra/service` e `infra/routes`. Pruebas de scripts: `bash scripts/tests/test-check-platform.sh`.
+
 ## Desarrollo con SDD
 
 Este repositorio se desarrolla con **desarrollo guiado por especificaciones (SDD)** usando Claude Code y un arnés con persistencia en disco. La especificación original del servicio está en [docs/](docs/); las features nuevas van en `specs/NNN-nombre/`.
@@ -222,8 +246,8 @@ app/            servicio FastAPI (api/, domain/, db/, config.py, main.py)
 db/             Dockerfile de la BD, schema.sql, seed.sql, init/01_init.sh
 tests/          unit/, integration/, perf/ (+ test_migrate, test_shutdown)
 compose.yaml    servicios db, api y tests (perfil "test")
-infra/          Terraform: base/, service/, bootstrap/ (arranque manual), INVENTARIO.md
-scripts/        run-schema-task.sh (tarea ECS del esquema)
+infra/          Terraform: base/, service/, routes/, bootstrap/ (arranque manual), INVENTARIO.md
+scripts/        run-schema-task.sh, check-platform.sh, buscar-listener-express.sh, smoke-gateway-geoespacial.sh
 .github/        workflows provision.yml y deprovision.yml
 docs/           spec, plan, tareas y verificación originales del servicio
 specs/          features SDD nuevas (spec.md · plan.md · tasks.md · verify.md)

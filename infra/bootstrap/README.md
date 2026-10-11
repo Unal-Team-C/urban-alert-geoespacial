@@ -22,6 +22,7 @@ aws iam create-open-id-connect-provider --url https://token.actions.githubuserco
 - Políticas gestionadas adjuntas:
   - `github-actions-urban-alertPolicy` → [github-deploy-policy.json](github-deploy-policy.json): ECR, ECS Express, `iam:PassRole` sobre `role/urban-alert-*`, RDS, S3, SQS, WAF, red y secretos.
   - `github-actions-urban-alert-terraform` → [github-terraform-policy.json](github-terraform-policy.json): lo que Terraform necesita además para importar, gestionar y destruir (ECR, roles `urban-alert-*`, logs, secretos de RDS, tarea del esquema).
+  - `github-actions-urban-alert-platform` → definida y versionada en `urban-alert-plataforma/infra/bootstrap/github-platform-policy.json`: red, API Gateway (`/apis/*`, `/vpclinks/*`), SSM `/urban-alert/*` y `elasticloadbalancing:Describe*`. Este repo la usa para leer el contrato de la plataforma y registrar sus rutas.
 - El nombre del rol empieza por `github-actions-`, no por `urban-alert-`: así los permisos de IAM de Terraform no le alcanzan y el pipeline no puede modificarse a sí mismo.
 
 ## 3. Bucket del estado de Terraform
