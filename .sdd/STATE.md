@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T032
+tarea_actual: T033
 estado_tarea: -
 
 ## Siguiente paso
 
-T032: infra/routes/tests/routes.tftest.hcl.
+T033: scripts/smoke-gateway-geoespacial.sh.
 
 ## Contexto de trabajo
 

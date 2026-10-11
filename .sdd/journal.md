@@ -168,3 +168,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T031 hecha
 - infra/routes: versions, backend geoespacial/routes.tfstate, providers (Stack=routes), variables express_endpoint/express_listener_arn con validación (como el ejemplo de la plataforma), main.tf (SSM api-id/vpc-link-id/api-endpoint con nonsensitive; 3 integraciones HTTP_PROXY por VPC_LINK con payload 1.0, TLS y Host = endpoint, overwrite:path; 3 rutas GET NONE / POST AWS_IAM), outputs gateway_url y route_keys, lockfile linux_amd64/linux_arm64/darwin_arm64. Verificado: init -lockfile=readonly y validate «Success»; fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T032 hecha
+- infra/routes/tests/routes.tftest.hcl: 6 runs (exactamente las 3 rutas de RF-020 en el gateway de SSM; POST AWS_IAM y GET NONE; integraciones HTTP_PROXY/VPC_LINK/payload 1.0/listener, Host y TLS = endpoint, reescritura de rutas y métodos; gateway_url desde SSM; endpoint con esquema y ARN que no es listener rechazados). Verificado: terraform test 6 passed.
