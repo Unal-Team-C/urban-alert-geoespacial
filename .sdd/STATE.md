@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T021
+tarea_actual: T022
 estado_tarea: -
 
 ## Siguiente paso
 
-T021: .github/workflows/deprovision.yml (confirmación, destroy service, apply allow_destroy, destroy platform).
+T022: sección «Despliegue en AWS» del README.
 
 ## Contexto de trabajo
 
@@ -26,6 +26,7 @@ T021: .github/workflows/deprovision.yml (confirmación, destroy service, apply a
 - Terraform local: wrapper `<scratchpad>/tf` (podman, hashicorp/terraform:1.16.5, caché de plugins en ~/.cache/tf-plugins). En zsh no usar `$TF` con espacios.
 - Riesgo abierto: el SG de tareas no tiene reglas de entrada; se asume que Express añade su propio SG ALB→tareas (comprobar en T024).
 - Supuesto a comprobar en T024: RDS etiqueta su secreto maestro con `aws:rds:primaryDBInstanceArn` (la política read-project-secrets lo usa como condición). Los roles urban-alert-ecs-* son compartibles por nombre pero este stack los destruye al desaprovisionar: avisar al usuario.
+- No lanzar Deprovision mientras exista infra/platform/imports.tf (T025 lo elimina tras el primer apply).
 - Rama `aws-provisioning`. Numeración 002 porque `docs/` ya contiene la spec 001-servicio-geoespacial original.
 
 ## Bloqueos / preguntas abiertas

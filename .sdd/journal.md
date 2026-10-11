@@ -112,3 +112,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T020 hecha
 - .github/workflows/provision.yml: push a main; concurrency urban-alert-geoespacial-aws sin cancelar; job test (compose, fmt, validate+test de ambos stacks con lockfile readonly, actionlint 1.7.7); job provision (OIDC, apply platform con image_tag=SHA, salidas, login ECR, build linux/amd64 + push salvo tag existente, run-schema-task.sh, apply service, /health + consulta de cercanía con 30 reintentos, resumen con URL). Verificado: actionlint sin errores (incluye shellcheck de los run), sin aws-access-key-id, orden = D-004.
+
+## 2026-10-10 · 002-migracion-aws · T021 hecha
+- .github/workflows/deprovision.yml: solo workflow_dispatch con input confirm; primer paso corta si confirm != urban-alert-geoespacial o la rama no es main; misma concurrency; destroy service (salta si su estado está vacío) → apply platform con allow_destroy=true y final_snapshot_suffix=run_id (salta si vacío) → destroy platform; resumen con el nombre de la copia final. Verificado: actionlint sin errores; sin on: push.

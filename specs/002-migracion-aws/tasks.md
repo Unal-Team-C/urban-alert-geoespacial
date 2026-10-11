@@ -48,7 +48,7 @@ Dependencias explícitas: añadir `— depende: T00X`.
 ## Fase 4: Integración
 
 - [x] T020 Crear el workflow de aprovisionamiento: `push` a `main`, `concurrency` común sin cancelar; job `test` (suite Python en compose, `fmt`/`validate`/`test` de ambos stacks, `actionlint`); job `provision` (OIDC → apply platform con `image_tag=$GITHUB_SHA` → login ECR → build `linux/amd64` + push si el tag no existe → `run-schema-task.sh` → apply service → `curl` con reintentos a `/health` y a una consulta de cercanía → URL en el resumen) — archivos: .github/workflows/provision.yml — cubre: RF-007, RF-012, RF-014, RF-015, RF-016, RNF-005 — verifica: actionlint sin errores; no hay `aws-access-key-id` en el YAML; el orden de pasos coincide con D-004 — depende: T018, T019
-- [ ] T021 Crear el workflow de desaprovisionamiento: `workflow_dispatch` con input `confirm`, falla sin tocar nada si no es `urban-alert-geoespacial`; misma `concurrency`; destroy service → apply platform con `allow_destroy=true` y `final_snapshot_suffix=${{ github.run_id }}` → destroy platform — archivos: .github/workflows/deprovision.yml — cubre: RF-013, RF-013b, RF-014, RF-015 — verifica: actionlint sin errores; sin `on: push`; el paso de confirmación es el primero y corta el job
+- [x] T021 Crear el workflow de desaprovisionamiento: `workflow_dispatch` con input `confirm`, falla sin tocar nada si no es `urban-alert-geoespacial`; misma `concurrency`; destroy service → apply platform con `allow_destroy=true` y `final_snapshot_suffix=${{ github.run_id }}` → destroy platform — archivos: .github/workflows/deprovision.yml — cubre: RF-013, RF-013b, RF-014, RF-015 — verifica: actionlint sin errores; sin `on: push`; el paso de confirmación es el primero y corta el job
 
 ## Fase 5: Pulido
 
