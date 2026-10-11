@@ -6,13 +6,13 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: implement
+fase: specify
 tarea_actual: T024
 estado_tarea: bloqueada
 
 ## Siguiente paso
 
-(1) Usuario actualiza la confianza del rol de GitHub con infra/bootstrap/github-oidc-trust.json (subject inmutable `repo:Unal-Team-C@335834608/*`). (2) Especificar la plataforma compartida en el repo nuevo urban-alert-plataforma (local: «Migración a AWS/Plataforma compartida AWS»): VPC privada + salida + API Gateway + VPC Link. (3) Después, actualizar spec/plan/tareas de 002 para consumir esa plataforma (servicio privado, ruta en el gateway).
+El usuario revisa y aprueba la spec 002 v2 (estado aclarada). Con la aprobación: `Estado: aprobada` → replanificar (`/sdd-plan`: red de la plataforma por SSM, schema task sin IP pública, stack de rutas tras el servicio con buscar-listener-express.sh, deprovision de rutas, política de plataforma) → actualizar tasks.md.
 
 ## Contexto de trabajo
 

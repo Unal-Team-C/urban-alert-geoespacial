@@ -135,3 +135,8 @@
 
 ## 2026-10-11 · general · Repo de plataforma compartida creado
 - github.com/Unal-Team-C/urban-alert-plataforma (privado), con arnés SDD; carpeta local «Migración a AWS/Plataforma compartida AWS». Su subject OIDC también es inmutable con el mismo ID de organización (335834608): la confianza corregida lo cubre.
+
+## 2026-10-11 · 002-migracion-aws · Spec revisada (v2): exposición por el API Gateway compartido
+- Plataforma lista (urban-alert-plataforma 001-red-api-gateway; gateway https://aotsp8k5ad.execute-api.us-east-2.amazonaws.com). Contrato SSM /urban-alert/plataforma/ y guía docs/integracion.md.
+- Nueva HU-6 y RF-019 (red privada compartida desde SSM, sin URL ni IP pública), RF-020 (GET reports y GET coordinates/{id} públicas; POST coordinates interna con AWS_IAM; nada más publicado, ni /health), RF-021 (falla si no hay plataforma). Cambian RF-012 (registrar rutas + comprobación por el gateway), RF-013b (rutas primero, no tocar plataforma), RF-017, RNF-001, RNF-004, MS-002, supuestos y fuera de alcance.
+- Estado: aclarada, pendiente de aprobación antes de replanificar.
