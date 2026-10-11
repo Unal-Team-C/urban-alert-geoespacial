@@ -27,7 +27,7 @@ Dependencias explícitas: añadir `— depende: T00X`.
 
 - [x] T004 [P] Escribir pruebas del formateador JSON (campos `timestamp`, `level`, `logger`, `message`, extras, excepción serializada) y del middleware de acceso (una línea con `method`, `path`, `status`, `duration_ms`) — archivos: tests/unit/test_observability.py — cubre: RF-004 — verifica: `docker-compose --profile test run --rm --build tests pytest tests/unit/test_observability.py` falla solo por `ModuleNotFoundError: app.observability`
 - [x] T005 [P] Escribir pruebas de la migración: aplica el esquema sobre `geospatial_test`, segunda ejecución sin error, el rol de aplicación (`DB_APP_USER` de prueba) puede `SELECT`/`INSERT` y no `UPDATE`/`DELETE`/`DROP`, el cambio de contraseña se sincroniza, `DB_SSLMODE` se respeta — archivos: tests/integration/test_migrate.py — cubre: RF-002, RF-008, RF-009 — verifica: la prueba falla solo por `ModuleNotFoundError: app.db.migrate`
-- [ ] T006 [P] Escribir la prueba de apagado: uvicorn en subproceso contra `geospatial_test`, petición lenta en curso + `SIGTERM` → la petición termina con 200, el proceso sale con 0 en < 25 s y el log contiene el cierre del pool — archivos: tests/integration/test_shutdown.py — cubre: RF-005 — verifica: la prueba se ejecuta y falla en la aserción del log de cierre del pool (todavía no se registra)
+- [x] T006 [P] Escribir la prueba de apagado: uvicorn en subproceso contra `geospatial_test`, petición lenta en curso + `SIGTERM` → la petición termina con 200, el proceso sale con 0 en < 25 s y el log contiene el cierre del pool — archivos: tests/integration/test_shutdown.py — cubre: RF-005 — verifica: la prueba se ejecuta y falla en la aserción del log de cierre del pool (todavía no se registra)
 
 ## Fase 3: Núcleo
 

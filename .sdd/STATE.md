@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T006
+tarea_actual: T007
 estado_tarea: -
 
 ## Siguiente paso
 
-T006: escribir tests/integration/test_shutdown.py (uvicorn en subproceso + app con ruta lenta, SIGTERM con petición en curso).
+T007: implementar app/observability.py (JsonFormatter, configure_logging, AccessLogMiddleware ASGI puro) y registrarlo en app/main.py; log 'database pool closed' en close_pool.
 
 ## Contexto de trabajo
 

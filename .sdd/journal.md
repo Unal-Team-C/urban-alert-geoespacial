@@ -67,3 +67,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T005 hecha
 - tests/integration/test_migrate.py: esquema aplicado (postgis, tabla, índice), dos ejecuciones sin error, privilegios SELECT/INSERT sí y UPDATE/DELETE/TRUNCATE no, sin DDL, contraseña sincronizada (con comillas), sslmode=require falla contra servidor sin TLS. Verificado: falla solo por ModuleNotFoundError: app.db.migrate.
+
+## 2026-10-10 · 002-migracion-aws · T006 hecha
+- tests/integration/test_shutdown.py + slow_app.py: uvicorn en subproceso con los flags del CMD, petición lenta en curso + SIGTERM. Hallazgo: uvicorn reemite la señal capturada tras el apagado, así que el código de salida limpio es -15 (143 en ECS), no 0; la prueba acepta 0 o -SIGTERM. Verificado: la petición termina con 200 y la prueba falla solo en el log 'database pool closed'.
