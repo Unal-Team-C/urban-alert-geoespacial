@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T029
+tarea_actual: T030
 estado_tarea: -
 
 ## Siguiente paso
 
-T029: assignPublicIp=DISABLED en run-schema-task.sh.
+T030: service: remote_state base (ya hecho en T026), salidas service_endpoint/service_name/cluster_name; tests.
 
 ## Contexto de trabajo
 

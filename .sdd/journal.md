@@ -159,3 +159,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T028 hecha
 - scripts/buscar-listener-express.sh copiado de la plataforma (solo cambia el comentario de origen); scripts/check-platform.sh (aws ssm get-parameters de los 9 parámetros, falla listando los que faltan; prefijo configurable); scripts/tests/test-check-platform.sh con aws simulado (4 casos). Verificado: 4 ok; shellcheck sin avisos.
+
+## 2026-10-10 · 002-migracion-aws · T029 hecha
+- run-schema-task.sh: assignPublicIp=DISABLED con comentario (subredes privadas + NAT de la plataforma). Verificado: 1 coincidencia; shellcheck sin avisos.
