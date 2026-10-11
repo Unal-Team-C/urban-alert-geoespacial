@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T033
+tarea_actual: T034
 estado_tarea: -
 
 ## Siguiente paso
 
-T033: scripts/smoke-gateway-geoespacial.sh.
+T034: provision.yml v2.
 
 ## Contexto de trabajo
 

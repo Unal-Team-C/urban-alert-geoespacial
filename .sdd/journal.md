@@ -171,3 +171,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T032 hecha
 - infra/routes/tests/routes.tftest.hcl: 6 runs (exactamente las 3 rutas de RF-020 en el gateway de SSM; POST AWS_IAM y GET NONE; integraciones HTTP_PROXY/VPC_LINK/payload 1.0/listener, Host y TLS = endpoint, reescritura de rutas y métodos; gateway_url desde SSM; endpoint con esquema y ARN que no es listener rechazados). Verificado: terraform test 6 passed.
+
+## 2026-10-10 · 002-migracion-aws · T033 hecha
+- scripts/smoke-gateway-geoespacial.sh: GET reports 200 + array (reintentos SMOKE_ATTEMPTS, por defecto 30×10 s), GET coordinates/<uuid> 404 con cuerpo del servicio ({code:404}, distingue del 404 del gateway), POST sin firma 403, GET /health 404. Verificado: shellcheck OK; contra el gateway real sin rutas del servicio falla en las 3 primeras con mensaje claro (404 {"message":"Not Found"}) y /health ok (exit 3).
