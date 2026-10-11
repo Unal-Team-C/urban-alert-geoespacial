@@ -127,3 +127,8 @@
 - Consecuencias (docs ECS Express, express-service-work.html): con subredes privadas Express crea un ALB **interno** y no asigna IP pública → las tareas necesitan NAT Gateway o endpoints de VPC; la VPC predeterminada solo tiene subredes públicas → D-006 cambia. Express crea su propio SG de ALB y de servicio (el SG que pasamos es adicional): supuesto del plan confirmado.
 - Pendiente de investigar en el replan: integración API Gateway HTTP API + VPC Link con el ALB interno de Express (reglas por host-header).
 - Primer Provision (run 38101589201): pruebas OK; falló en configure-aws-credentials («Not authorized to perform sts:AssumeRoleWithWebIdentity»). No se creó nada en AWS. Causa probable: la relación de confianza del rol no coincide con `repo:Unal-Team-C/urban-alert-geoespacial:ref:refs/heads/main`.
+
+## 2026-10-11 · 002-migracion-aws · Causa del fallo OIDC
+- El repo usa el subject inmutable de GitHub: `repo:Unal-Team-C@335834608/urban-alert-geoespacial@1413702275:ref:refs/heads/main` (API oidc/customization/sub: use_immutable_subject=true). La confianza del rol tenía `repo:Unal-Team-C/*`, que no casa con `Unal-Team-C@335834608/...`.
+- Corrección propuesta al usuario y versionada en infra/bootstrap/github-oidc-trust.json: `repo:Unal-Team-C@335834608/*:ref:refs/heads/main` (+ formato clásico).
+- El usuario decide crear un repo de plataforma compartida para las redes (y el API Gateway).

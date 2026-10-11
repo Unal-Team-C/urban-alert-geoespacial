@@ -18,7 +18,7 @@ aws iam create-open-id-connect-provider --url https://token.actions.githubuserco
 
 ## 2. Rol que asumen los workflows
 
-- Relación de confianza: [github-oidc-trust.json](github-oidc-trust.json). Admite todos los repos de `Unal-Team-C`, solo desde la rama `main`. Los workflows no usan *environments* de GitHub: un *environment* cambiaría el `sub` del token a `repo:<org>/<repo>:environment:<nombre>` y la confianza dejaría de cumplirse.
+- Relación de confianza: [github-oidc-trust.json](github-oidc-trust.json). Admite todos los repos de `Unal-Team-C`, solo desde la rama `main`. Los repos de la organización usan el *subject* inmutable de GitHub, con IDs: `repo:Unal-Team-C@335834608/<repo>@<id>:ref:refs/heads/main` (se ve con `gh api repos/Unal-Team-C/<repo>/actions/oidc/customization/sub`). Por eso el patrón incluye `@335834608` (ID de la organización, no cambia aunque se renombre); el segundo patrón cubre repos con el formato clásico. Los workflows no usan *environments* de GitHub: un *environment* cambiaría el `sub` del token a `repo:<org>/<repo>:environment:<nombre>` y la confianza dejaría de cumplirse.
 - Políticas gestionadas adjuntas:
   - `github-actions-urban-alertPolicy` → [github-deploy-policy.json](github-deploy-policy.json): ECR, ECS Express, `iam:PassRole` sobre `role/urban-alert-*`, RDS, S3, SQS, WAF, red y secretos.
   - `github-actions-urban-alert-terraform` → [github-terraform-policy.json](github-terraform-policy.json): lo que Terraform necesita además para importar, gestionar y destruir (ECR, roles `urban-alert-*`, logs, secretos de RDS, tarea del esquema).
