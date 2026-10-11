@@ -8,11 +8,11 @@
 feature_activa: 002-migracion-aws
 fase: implement
 tarea_actual: T037
-estado_tarea: -
+estado_tarea: en_progreso
 
 ## Siguiente paso
 
-T037: pedir confirmación al usuario para subir aws-provisioning y abrir el PR a main; él lo fusiona y se sigue el primer Provision v2.
+T037: rama subida y PR v2 abierto; esperar a que el usuario lo fusione y seguir el primer Provision v2 (gh run watch); corregir fallos con commits pequeños.
 
 ## Contexto de trabajo
 
