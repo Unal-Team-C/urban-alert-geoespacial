@@ -73,3 +73,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T007 hecha
 - app/observability.py (JsonFormatter, configure_logging, AccessLogMiddleware ASGI puro, sin query string, 5xx como ERROR); app/main.py lo registra; app/db/pool.py registra 'database pool closed'. Verificado: pytest tests/unit 57 passed; integración (sin test_migrate) 27 passed — test_shutdown ya pasa porque el log de cierre se añadió aquí.
+
+## 2026-10-10 · 002-migracion-aws · T008 hecha
+- app/db/migrate.py: MigrationSettings.from_env (DB_HOST/PORT/NAME, DB_ADMIN_*, DB_APP_*, DB_SSLMODE=require, SCHEMA_PATH), migrate() en una transacción, rol con format(%I/%L), REVOKE ALL + GRANT SELECT, INSERT; main() con logs JSON y exit 1 si falla. Desviación: el COPY de db/schema.sql al Dockerfile se adelantó de T009 para poder verificar; compose.yaml no necesitó cambios (la prueba deriva todo de DATABASE_URL). Verificado: test_migrate 10 passed; suite completa en verde.

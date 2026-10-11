@@ -7,6 +7,7 @@ WORKDIR /srv
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 COPY app ./app
+COPY db/schema.sql ./db/schema.sql
 RUN chmod -R a+rX /srv && useradd --create-home --uid 10001 appuser
 USER appuser
 EXPOSE 8000

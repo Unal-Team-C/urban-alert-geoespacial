@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T008
+tarea_actual: T009
 estado_tarea: -
 
 ## Siguiente paso
 
-T008: implementar app/db/migrate.py (MigrationSettings.from_env, migrate()), COPY db/schema.sql en el Dockerfile (adelantado de T009 para poder verificar).
+T009: ajustar CMD del Dockerfile (--no-access-log --timeout-graceful-shutdown 20 --proxy-headers --forwarded-allow-ips=*); verificar suite completa y docker-compose up healthy.
 
 ## Contexto de trabajo
 
