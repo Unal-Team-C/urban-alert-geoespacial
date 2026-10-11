@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # Runs the one-off schema task (python -m app.db.migrate) inside the VPC and fails if it fails.
 # Spec 002 RF-016, plan D-003. Called by .github/workflows/provision.yml after the image is pushed.
+# SUBNETS are the platform private subnets (output subnet_ids of infra/base).
 #
-# Required environment (from `terraform -chdir=infra/platform output`):
+# Required environment (from `terraform -chdir=infra/base output`):
 #   CLUSTER, TASK_DEFINITION, SUBNETS (comma-separated), SECURITY_GROUP, LOG_GROUP, CONTAINER
 # Optional: AWS_REGION (the AWS CLI reads it).
 set -euo pipefail
 
 : "${CLUSTER:?}" "${TASK_DEFINITION:?}" "${SUBNETS:?}" "${SECURITY_GROUP:?}" "${LOG_GROUP:?}" "${CONTAINER:?}"
 
-network="awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SECURITY_GROUP}],assignPublicIp=ENABLED}"
+# Private subnets of the shared platform: no public IP, egress through the platform NAT (plan D-022).
+network="awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SECURITY_GROUP}],assignPublicIp=DISABLED}"
 
 echo "Starting schema task ${TASK_DEFINITION} in cluster ${CLUSTER}"
 run_output=$(aws ecs run-task \

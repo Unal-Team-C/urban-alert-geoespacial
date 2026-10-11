@@ -6,7 +6,7 @@ provider "aws" {
       Project   = "urban-alert"
       Service   = "geoespacial"
       ManagedBy = "terraform"
-      Stack     = "platform"
+      Stack     = "routes"
     }
   }
 }

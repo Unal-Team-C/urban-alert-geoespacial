@@ -4,7 +4,7 @@ Cuenta `348364742283`, región `us-east-2`. Spec 002, RF-010b y RF-010c.
 
 ## 1. Recursos creados a mano e importados a Terraform
 
-Se crearon en la consola antes de existir el código. El stack `infra/platform` los importa en su primera ejecución con los bloques de `infra/platform/imports.tf`, que se borra después (plan D-005): un bloque `import` permanente fallaría tras un desaprovisionamiento, porque el recurso ya no existiría.
+Se crearon en la consola antes de existir el código. El stack `infra/base` los importa en su primera ejecución con los bloques de `infra/base/imports.tf`, que se borra después (plan D-005): un bloque `import` permanente fallaría tras un desaprovisionamiento, porque el recurso ya no existiría.
 
 Si se pierde el estado de Terraform con estos recursos todavía en AWS, se vuelven a importar copiando los bloques de la última columna a un `imports.tf` temporal.
 
@@ -27,8 +27,9 @@ No existían antes del código; los crea y destruye Terraform.
 
 | Stack | Recursos |
 |---|---|
-| `platform` | SG `urban-alert-geoespacial-tasks` y `urban-alert-geoespacial-rds`, subnet group y RDS `urban-alert-geoespacial-db` (con su secreto `rds!…` gestionado por RDS), secreto `urban-alert-geoespacial-db`, clúster ECS `urban-alert-geoespacial`, grupos de logs `/ecs/urban-alert-geoespacial` y `/ecs/urban-alert-geoespacial-schema`, task definition `urban-alert-geoespacial-schema`, regla de ciclo de vida de ECR |
-| `service` | Servicio ECS Express `urban-alert-geoespacial` (con el balanceador, el certificado y el escalado que crea ECS con el rol de infraestructura) |
+| `base` | En la VPC compartida: SG `urban-alert-geoespacial-tasks` y `urban-alert-geoespacial-rds`, subnet group y RDS `urban-alert-geoespacial-db` (con su secreto `rds!…` gestionado por RDS), secreto `urban-alert-geoespacial-db`, clúster ECS `urban-alert-geoespacial`, grupos de logs `/ecs/urban-alert-geoespacial` y `/ecs/urban-alert-geoespacial-schema`, task definition `urban-alert-geoespacial-schema`, regla de ciclo de vida de ECR |
+| `service` | Servicio ECS Express `urban-alert-geoespacial` (con el balanceador **interno**, el certificado, sus grupos de seguridad y el escalado que crea ECS con el rol de infraestructura) |
+| `routes` | En el API Gateway compartido: 3 integraciones HTTP_PROXY por el VPC Link de la plataforma y 3 rutas (`GET /api/v1/geoespacial/reports`, `GET /api/v1/geoespacial/coordinates/{id}`, `POST /api/v1/geoespacial/coordinates` con `AWS_IAM`) |
 
 ## 3. Recursos externos de arranque (no gestionados por Terraform)
 
@@ -41,3 +42,8 @@ Terraform los necesita para ejecutarse; el desaprovisionamiento no los toca. Có
 | Política `github-actions-urban-alertPolicy` | `arn:aws:iam::348364742283:policy/github-actions-urban-alertPolicy` | [bootstrap/github-deploy-policy.json](bootstrap/github-deploy-policy.json) |
 | Política `github-actions-urban-alert-terraform` | `arn:aws:iam::348364742283:policy/github-actions-urban-alert-terraform` | [bootstrap/github-terraform-policy.json](bootstrap/github-terraform-policy.json) |
 | Bucket del estado | `urban-alert-tfstate-348364742283` | Versionado, cifrado, privado, solo TLS |
+| Política `github-actions-urban-alert-platform` | `arn:aws:iam::348364742283:policy/github-actions-urban-alert-platform` | Definida en `urban-alert-plataforma/infra/bootstrap/`; da a este repo `apigateway` sobre `/apis/*`, lectura de SSM y `elasticloadbalancing:Describe*` |
+
+## 4. Plataforma compartida (otro repo, no gestionada aquí)
+
+`Unal-Team-C/urban-alert-plataforma`: VPC, subredes privadas, NAT, API Gateway y VPC Link. Este repo solo lee su contrato en SSM (`/urban-alert/plataforma/`) y registra rutas en su gateway; el *Deprovision* de este repo nunca la toca.

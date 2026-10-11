@@ -4,10 +4,6 @@ mock_provider "aws" {
     defaults = { account_id = "348364742283" }
   }
 
-  mock_data "aws_subnets" {
-    defaults = { ids = ["subnet-aaaa", "subnet-bbbb", "subnet-cccc"] }
-  }
-
   mock_resource "aws_db_instance" {
     defaults = {
       address            = "urban-alert-geoespacial-db.example.us-east-2.rds.amazonaws.com"
@@ -19,6 +15,17 @@ mock_provider "aws" {
 }
 
 mock_provider "random" {}
+
+# Platform contract (SSM). StringList values are comma-separated.
+override_data {
+  target = data.aws_ssm_parameter.vpc_id
+  values = { value = "vpc-plataforma" }
+}
+
+override_data {
+  target = data.aws_ssm_parameter.private_subnets
+  values = { value = "subnet-priv-a,subnet-priv-b,subnet-priv-c" }
+}
 
 # Resources in imports.tf cannot be imported from a mock provider: give them fixed values instead.
 override_resource {
@@ -111,6 +118,25 @@ run "only_tasks_reach_the_database" {
   assert {
     condition     = aws_vpc_security_group_ingress_rule.rds_from_tasks.from_port == 5432 && aws_vpc_security_group_ingress_rule.rds_from_tasks.to_port == 5432
     error_message = "The RDS ingress rule must only open PostgreSQL."
+  }
+}
+
+run "uses_the_shared_private_network" {
+  command = apply
+
+  assert {
+    condition     = aws_security_group.tasks.vpc_id == "vpc-plataforma" && aws_security_group.rds.vpc_id == "vpc-plataforma"
+    error_message = "Security groups must live in the platform VPC read from SSM (RF-019)."
+  }
+
+  assert {
+    condition     = toset(aws_db_subnet_group.this.subnet_ids) == toset(["subnet-priv-a", "subnet-priv-b", "subnet-priv-c"])
+    error_message = "RDS must use every private subnet of the platform."
+  }
+
+  assert {
+    condition     = output.subnet_ids == tolist(["subnet-priv-a", "subnet-priv-b", "subnet-priv-c"])
+    error_message = "The service and the schema task must get every private subnet."
   }
 }
 

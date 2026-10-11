@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T024
+tarea_actual: T037
 estado_tarea: en_progreso
 
 ## Siguiente paso
 
-T024: rama subida y PR aws-provisioning → main abierto; esperar a que el usuario lo fusione y seguir la primera ejecución de Provision (gh run watch); corregir fallos con commits pequeños a main.
+T037: rama subida y PR v2 abierto; esperar a que el usuario lo fusione y seguir el primer Provision v2 (gh run watch); corregir fallos con commits pequeños.
 
 ## Contexto de trabajo
 
@@ -31,4 +31,4 @@ T024: rama subida y PR aws-provisioning → main abierto; esperar a que el usuar
 
 ## Bloqueos / preguntas abiertas
 
-- ninguno (scope workflow concedido; rama subida). Esperando que el usuario fusione el PR #1.
+- ninguno (pendiente de aprobación del plan/tareas v2)

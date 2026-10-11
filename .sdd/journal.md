@@ -121,3 +121,65 @@
 
 ## 2026-10-10 · 002-migracion-aws · T023 hecha
 - CLAUDE.md: gotcha DOCKER_CONFIG/podman, stacks y estado, workflows, migrate, comandos de validación con Podman (terraform 1.16.5, actionlint 1.7.7, shellcheck). Cabecera de tasks.md alineada con esas versiones. Verificado: los comandos coinciden con los usados en T010–T021.
+
+## 2026-10-11 · 002-migracion-aws · Cambio de requisitos: exposición por Amazon API Gateway
+- Usuario: el servicio debe exponerse por **Amazon API Gateway**, **compartido** por todos los microservicios de UrbanAlert, y accesible **solo** a través del gateway (sin URL pública propia).
+- Consecuencias (docs ECS Express, express-service-work.html): con subredes privadas Express crea un ALB **interno** y no asigna IP pública → las tareas necesitan NAT Gateway o endpoints de VPC; la VPC predeterminada solo tiene subredes públicas → D-006 cambia. Express crea su propio SG de ALB y de servicio (el SG que pasamos es adicional): supuesto del plan confirmado.
+- Pendiente de investigar en el replan: integración API Gateway HTTP API + VPC Link con el ALB interno de Express (reglas por host-header).
+- Primer Provision (run 38101589201): pruebas OK; falló en configure-aws-credentials («Not authorized to perform sts:AssumeRoleWithWebIdentity»). No se creó nada en AWS. Causa probable: la relación de confianza del rol no coincide con `repo:Unal-Team-C/urban-alert-geoespacial:ref:refs/heads/main`.
+
+## 2026-10-11 · 002-migracion-aws · Causa del fallo OIDC
+- El repo usa el subject inmutable de GitHub: `repo:Unal-Team-C@335834608/urban-alert-geoespacial@1413702275:ref:refs/heads/main` (API oidc/customization/sub: use_immutable_subject=true). La confianza del rol tenía `repo:Unal-Team-C/*`, que no casa con `Unal-Team-C@335834608/...`.
+- Corrección propuesta al usuario y versionada en infra/bootstrap/github-oidc-trust.json: `repo:Unal-Team-C@335834608/*:ref:refs/heads/main` (+ formato clásico).
+- El usuario decide crear un repo de plataforma compartida para las redes (y el API Gateway).
+
+## 2026-10-11 · general · Repo de plataforma compartida creado
+- github.com/Unal-Team-C/urban-alert-plataforma (privado), con arnés SDD; carpeta local «Migración a AWS/Plataforma compartida AWS». Su subject OIDC también es inmutable con el mismo ID de organización (335834608): la confianza corregida lo cubre.
+
+## 2026-10-11 · 002-migracion-aws · Spec revisada (v2): exposición por el API Gateway compartido
+- Plataforma lista (urban-alert-plataforma 001-red-api-gateway; gateway https://aotsp8k5ad.execute-api.us-east-2.amazonaws.com). Contrato SSM /urban-alert/plataforma/ y guía docs/integracion.md.
+- Nueva HU-6 y RF-019 (red privada compartida desde SSM, sin URL ni IP pública), RF-020 (GET reports y GET coordinates/{id} públicas; POST coordinates interna con AWS_IAM; nada más publicado, ni /health), RF-021 (falla si no hay plataforma). Cambian RF-012 (registrar rutas + comprobación por el gateway), RF-013b (rutas primero, no tocar plataforma), RF-017, RNF-001, RNF-004, MS-002, supuestos y fuera de alcance.
+- Estado: aclarada, pendiente de aprobación antes de replanificar.
+
+## 2026-10-11 · 002-migracion-aws · Spec v2 aprobada
+- Usuario: «Déjala privada. Apruebo spec». POST /coordinates queda interna (AWS_IAM). Fase plan.
+
+## 2026-10-11 · 002-migracion-aws · Plan y tareas v2 (borrador)
+- Plan: sección «Revisión v2» + D-020 (stack routes, renombre platform→base), D-021 (red por SSM, sustituye D-006), D-022 (esquema sin IP pública), D-023 (rutas como el ejemplo de la plataforma), D-024 (humo por el gateway), D-025 (check-platform), D-026 (deprovision routes→service→base), D-027 (sin política nueva).
+- Tareas: T024/T025 descartadas (sustituidas por T037/T038); nuevas T026–T038 (13).
+
+## 2026-10-11 · 002-migracion-aws · Plan y tareas v2 aprobados
+- Aprobados por el usuario. Implementación desde T026.
+
+## 2026-10-10 · 002-migracion-aws · T026 hecha
+- git mv infra/platform → infra/base (y tests/base.tftest.hcl); backend geoespacial/base.tfstate; Stack=base; service lee terraform_remote_state "base"; workflows, README, INVENTARIO, CLAUDE.md, bootstrap y run-schema-task.sh actualizados. Verificado: validate+test base (6) y service (4) en verde, fmt limpio, actionlint OK; grep de infra/platform y platform.tfstate sin resultados fuera de specs/.sdd.
+
+## 2026-10-10 · 002-migracion-aws · T027 hecha
+- infra/base/network.tf: data aws_ssm_parameter /urban-alert/plataforma/vpc-id y subredes-privadas (nonsensitive: los IDs no son secretos, el proveedor marca todo SSM como sensible); SG en esa VPC; rds.tf subnet group = subredes privadas; outputs subnet_ids (todas) y vpc_id. Prueba nueva uses_the_shared_private_network con override_data. Verificado: base test 7 passed, service 4 passed, fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T028 hecha
+- scripts/buscar-listener-express.sh copiado de la plataforma (solo cambia el comentario de origen); scripts/check-platform.sh (aws ssm get-parameters de los 9 parámetros, falla listando los que faltan; prefijo configurable); scripts/tests/test-check-platform.sh con aws simulado (4 casos). Verificado: 4 ok; shellcheck sin avisos.
+
+## 2026-10-10 · 002-migracion-aws · T029 hecha
+- run-schema-task.sh: assignPublicIp=DISABLED con comentario (subredes privadas + NAT de la plataforma). Verificado: 1 coincidencia; shellcheck sin avisos.
+
+## 2026-10-10 · 002-migracion-aws · T030 hecha
+- infra/service/outputs.tf: service_arn, service_name, cluster_name y service_endpoint (host sin esquema ni barra final, de ingress_paths[0].endpoint); se elimina service_url (ya no hay URL pública). Pruebas nuevas endpoint_is_a_bare_host y endpoint_without_scheme_is_kept con override_resource. Verificado: service test 6 passed.
+
+## 2026-10-10 · 002-migracion-aws · T031 hecha
+- infra/routes: versions, backend geoespacial/routes.tfstate, providers (Stack=routes), variables express_endpoint/express_listener_arn con validación (como el ejemplo de la plataforma), main.tf (SSM api-id/vpc-link-id/api-endpoint con nonsensitive; 3 integraciones HTTP_PROXY por VPC_LINK con payload 1.0, TLS y Host = endpoint, overwrite:path; 3 rutas GET NONE / POST AWS_IAM), outputs gateway_url y route_keys, lockfile linux_amd64/linux_arm64/darwin_arm64. Verificado: init -lockfile=readonly y validate «Success»; fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T032 hecha
+- infra/routes/tests/routes.tftest.hcl: 6 runs (exactamente las 3 rutas de RF-020 en el gateway de SSM; POST AWS_IAM y GET NONE; integraciones HTTP_PROXY/VPC_LINK/payload 1.0/listener, Host y TLS = endpoint, reescritura de rutas y métodos; gateway_url desde SSM; endpoint con esquema y ARN que no es listener rechazados). Verificado: terraform test 6 passed.
+
+## 2026-10-10 · 002-migracion-aws · T033 hecha
+- scripts/smoke-gateway-geoespacial.sh: GET reports 200 + array (reintentos SMOKE_ATTEMPTS, por defecto 30×10 s), GET coordinates/<uuid> 404 con cuerpo del servicio ({code:404}, distingue del 404 del gateway), POST sin firma 403, GET /health 404. Verificado: shellcheck OK; contra el gateway real sin rutas del servicio falla en las 3 primeras con mensaje claro (404 {"message":"Not Found"}) y /health ok (exit 3).
+
+## 2026-10-10 · 002-migracion-aws · T034 hecha
+- provision.yml v2: job test añade scripts/tests y el stack routes; job provision: credenciales → check-platform.sh → base → salidas → ECR → esquema (privado) → service (salidas endpoint/cluster/nombre) → buscar-listener-express.sh → routes (express_endpoint, express_listener_arn) → smoke-gateway-geoespacial.sh → resumen con rutas públicas e interna. Desviación menor: la comprobación de la plataforma va tras el job de pruebas (necesita credenciales), pero antes de cualquier cambio, que es lo que pide RF-021. Verificado: actionlint sin errores; orden = tabla de la revisión v2.
+
+## 2026-10-10 · 002-migracion-aws · T035 hecha
+- deprovision.yml v2: tras la confirmación, Destroy routes (salta si vacío; variables de relleno que pasan las validaciones) → Destroy service → Lift protection → Destroy base; comentario de cabecera: no toca la plataforma ni el arranque. Nota: destruir routes lee SSM de la plataforma, así que debe hacerse antes de desaprovisionar la plataforma (la plataforma ya se niega si hay rutas). Verificado: actionlint sin errores; la confirmación sigue siendo el primer paso.
+
+## 2026-10-10 · 002-migracion-aws · T036 hecha
+- README: sección «Despliegue en AWS» v2 (plataforma compartida y SSM, diagrama, tabla de piezas con ALB interno, tabla de rutas pública/interna, qué necesita Reportes: execute-api:Invoke + SigV4, arranque con paso de la plataforma, workflows v2, orden de Deprovision respecto a la plataforma, costes); INVENTARIO (base en la VPC compartida, stack routes, política de la plataforma, sección 4 plataforma externa); bootstrap README (política github-actions-urban-alert-platform); CLAUDE.md. Verificado: los cuatro puntos de RF-017 v2 presentes y enlazados; suite completa: pytest 94, terraform test base 7/service 6/routes 6, fmt, actionlint, shellcheck y pruebas de scripts en verde.

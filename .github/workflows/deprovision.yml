@@ -1,6 +1,6 @@
 # Deprovisioning (spec 002, HU-2, RF-013): manual only, with explicit confirmation.
-# Removes everything Terraform manages (service, then platform) after a final RDS snapshot.
-# Bootstrap resources (OIDC, workflow role, state bucket) are not managed by Terraform and stay (RF-010c).
+# Removes everything Terraform manages, in reverse order (routes, service, base; plan D-026), after a final RDS
+# snapshot. Bootstrap resources (OIDC, workflow role, state bucket) and the shared platform are not touched (RF-010c).
 name: Deprovision
 
 on:
@@ -58,6 +58,18 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
+      - name: Destroy routes in the shared API Gateway
+        run: |
+          terraform -chdir=infra/routes init -input=false
+          if [ -z "$(terraform -chdir=infra/routes state list)" ]; then
+            echo "Routes stack is already empty."
+          else
+            # Placeholders that satisfy the variable validations; destroying does not use them.
+            terraform -chdir=infra/routes destroy -input=false -auto-approve \
+              -var "express_endpoint=deprovision.invalid" \
+              -var "express_listener_arn=arn:aws:elasticloadbalancing:us-east-2:000000000000:listener/app/deprovision/0/0"
+          fi
+
       - name: Destroy service
         run: |
           terraform -chdir=infra/service init -input=false
@@ -70,19 +82,19 @@ jobs:
       - name: Lift protection and set the final snapshot name
         id: unprotect
         run: |
-          terraform -chdir=infra/platform init -input=false
-          if [ -z "$(terraform -chdir=infra/platform state list)" ]; then
-            echo "Platform stack is already empty: nothing to delete."
+          terraform -chdir=infra/base init -input=false
+          if [ -z "$(terraform -chdir=infra/base state list)" ]; then
+            echo "Base stack is already empty: nothing to delete."
             echo "empty=true" >> "$GITHUB_OUTPUT"
           else
-            terraform -chdir=infra/platform apply -input=false -auto-approve \
+            terraform -chdir=infra/base apply -input=false -auto-approve \
               -var "image_tag=$IMAGE_TAG" -var allow_destroy=true -var "final_snapshot_suffix=${{ github.run_id }}"
           fi
 
-      - name: Destroy platform (final snapshot of the database is kept)
+      - name: Destroy base (final snapshot of the database is kept)
         if: steps.unprotect.outputs.empty != 'true'
         run: |
-          terraform -chdir=infra/platform destroy -input=false -auto-approve \
+          terraform -chdir=infra/base destroy -input=false -auto-approve \
             -var "image_tag=$IMAGE_TAG" -var allow_destroy=true -var "final_snapshot_suffix=${{ github.run_id }}"
           {
             echo "### Entorno eliminado"

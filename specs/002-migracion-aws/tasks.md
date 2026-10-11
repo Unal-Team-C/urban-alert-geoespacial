@@ -57,8 +57,24 @@ Dependencias explícitas: añadir `— depende: T00X`.
 
 ## Fase 6: Despliegue real (requiere acciones del usuario en GitHub)
 
-- [~] T024 Abrir el PR `aws-provisioning` → `main` (con confirmación del usuario), fusionarlo y seguir la primera ejecución de `provision.yml`; corregir fallos (p. ej. permisos IAM) con commits pequeños a `main`, actualizando `infra/bootstrap/*.json` si cambia alguna política — archivos: los que requiera cada corrección — cubre: RF-010b, RF-012, RF-016, RNF-004 — verifica: ejecución en verde; `curl <service_url>/health` → 200; ECR y roles importados conservan su ARN y fecha de creación — depende: T020, T021, T022
-- [ ] T025 Eliminar `imports.tf` tras la primera importación correcta, marcar en el inventario la fecha de importación y comprobar la idempotencia — archivos: infra/platform/imports.tf (borrado), infra/INVENTARIO.md — cubre: RF-010b, RNF-003 — verifica: la ejecución de `provision.yml` de ese commit muestra «No changes» en platform y solo el cambio de imagen (o ninguno) en service — depende: T024
+- [-] T024 Abrir el PR `aws-provisioning` → `main` (con confirmación del usuario), fusionarlo y seguir la primera ejecución de `provision.yml`; corregir fallos (p. ej. permisos IAM) con commits pequeños a `main`, actualizando `infra/bootstrap/*.json` si cambia alguna política — archivos: los que requiera cada corrección — cubre: RF-010b, RF-012, RF-016, RNF-004 — verifica: ejecución en verde; `curl <service_url>/health` → 200; ECR y roles importados conservan su ARN y fecha de creación — depende: T020, T021, T022 — descartada: sustituida por T037 (revisión v2; el PR #1 se fusionó y el primer Provision falló en OIDC sin crear nada)
+- [-] T025 Eliminar `imports.tf` tras la primera importación correcta, marcar en el inventario la fecha de importación y comprobar la idempotencia — archivos: infra/platform/imports.tf (borrado), infra/INVENTARIO.md — cubre: RF-010b, RNF-003 — verifica: la ejecución de `provision.yml` de ese commit muestra «No changes» en platform y solo el cambio de imagen (o ninguno) en service — depende: T024 — descartada: sustituida por T038 (revisión v2)
+
+## Fase 7: Revisión v2 — exposición por el API Gateway compartido (plan §Revisión v2)
+
+- [x] T026 Renombrar el stack `infra/platform` a `infra/base` (backend `geoespacial/base.tfstate`, `Stack = "base"`, prueba `tests/base.tftest.hcl`) y actualizar todas las referencias (workflows, README, INVENTARIO, CLAUDE.md, bootstrap) — archivos: infra/base/**, .github/workflows/*.yml, README.md, infra/INVENTARIO.md, CLAUDE.md — cubre: RF-010 (D-020) — verifica: `$TF -chdir=infra/base init -backend=false && validate && test` en verde; `grep -rn "infra/platform\|platform.tfstate" --exclude-dir=specs --exclude-dir=.sdd .` sin resultados
+- [x] T027 Tomar la red de la plataforma desde SSM (`vpc-id`, `subredes-privadas`) en lugar de la VPC predeterminada; SG y subnet group en la VPC compartida; pruebas con `override_data` de los parámetros — archivos: infra/base/network.tf, infra/base/rds.tf, infra/base/outputs.tf, infra/base/tests/base.tftest.hcl — cubre: RF-019 (D-021) — verifica: `$TF -chdir=infra/base test` en verde, con asserts de VPC del SG = `vpc-id` de SSM y subredes del subnet group = `subredes-privadas` — depende: T026
+- [x] T028 [P] Copiar `buscar-listener-express.sh` de la plataforma y crear `check-platform.sh` (falla con mensaje claro si falta algún parámetro de `/urban-alert/plataforma/`), con una prueba que use un `aws` simulado en el PATH — archivos: scripts/buscar-listener-express.sh, scripts/check-platform.sh, scripts/tests/test-check-platform.sh — cubre: RF-021 (D-025) — verifica: `bash scripts/tests/test-check-platform.sh` pasa (9 parámetros → 0; falta uno → ≠0 y mensaje «plataforma compartida no está aprovisionada»); shellcheck sin avisos
+- [x] T029 [P] Lanzar la tarea del esquema sin IP pública — archivos: scripts/run-schema-task.sh — cubre: RF-019 (D-022) — verifica: `grep -c "assignPublicIp=DISABLED" scripts/run-schema-task.sh` = 1; shellcheck sin avisos
+- [x] T030 Ajustar el stack service: estado remoto `geoespacial/base.tfstate`, salidas `service_endpoint` (host sin esquema), `service_name` y `cluster_name`; pruebas actualizadas (endpoint sin `https://`) — archivos: infra/service/main.tf, infra/service/outputs.tf, infra/service/tests/service.tftest.hcl — cubre: RF-019, RF-020 — verifica: `$TF -chdir=infra/service test` en verde — depende: T026
+- [x] T031 Crear el stack routes: backend `geoespacial/routes.tfstate`, `data` SSM de `api-id`/`vpc-link-id`/`api-endpoint`, variables `express_endpoint` y `express_listener_arn` con validación, 3 integraciones HTTP_PROXY por VPC Link (Host/TLS = endpoint, payload 1.0, reescritura de ruta) y 3 rutas (GET públicas, POST `AWS_IAM`), salidas `gateway_url` y `route_keys`, lockfile multiplataforma — archivos: infra/routes/*.tf, infra/routes/terraform.tfvars, infra/routes/.terraform.lock.hcl — cubre: RF-020 (D-023) — verifica: `$TF -chdir=infra/routes init -backend=false -lockfile=readonly && validate` en verde; `fmt -check` limpio
+- [x] T032 Escribir las pruebas del stack routes con `mock_provider` y `override_data` de SSM: claves de ruta exactas, `authorization_type` por ruta, ninguna `$default`, cada integración con `VPC_LINK`, `connection_id` = `vpc-link-id`, payload 1.0, `overwrite:header.host` y `server_name_to_verify` = endpoint, `overwrite:path` esperado; endpoint con esquema y ARN que no es de listener → error de validación — archivos: infra/routes/tests/routes.tftest.hcl — cubre: RF-020 — verifica: `$TF -chdir=infra/routes test` en verde — depende: T031
+- [x] T033 [P] Escribir la prueba de humo por el gateway (GET reports 200 con array; GET coordinates/<uuid aleatorio> 404 del servicio; POST sin firma 403; GET /api/v1/geoespacial/health 404; reintentos solo en la primera) — archivos: scripts/smoke-gateway-geoespacial.sh — cubre: HU-6, RF-020, RNF-001 (D-024) — verifica: shellcheck sin avisos; contra el gateway actual (sin rutas del servicio) falla en la primera comprobación con un mensaje claro
+- [x] T034 Actualizar `provision.yml` al orden v2: credenciales → `check-platform.sh` → (job test) → base → imagen → esquema → service → `buscar-listener-express.sh` → routes → humo; resumen con la URL del gateway; incluir `infra/routes` y `scripts/tests` en el job de pruebas — archivos: .github/workflows/provision.yml — cubre: RF-012, RF-020, RF-021 (D-025) — verifica: actionlint sin errores; el orden de pasos coincide con la tabla de la revisión v2 — depende: T027, T028, T029, T030, T032, T033
+- [x] T035 Actualizar `deprovision.yml`: routes destroy (variables de relleno válidas) → service destroy → base allow_destroy apply → base destroy; cada paso salta si su estado está vacío — archivos: .github/workflows/deprovision.yml — cubre: RF-013b (D-026) — verifica: actionlint sin errores; el primer paso sigue siendo la confirmación — depende: T031
+- [x] T036 [P] Documentar la v2: README (exposición solo por el gateway, tabla de rutas públicas/internas, URL del gateway, qué necesita Reportes: `execute-api:Invoke` + SigV4, orden de desaprovisionamiento respecto a la plataforma), INVENTARIO (rutas e integraciones creadas por Terraform; la plataforma como recurso externo), bootstrap README (política `github-actions-urban-alert-platform`) — archivos: README.md, infra/INVENTARIO.md, infra/bootstrap/README.md — cubre: RF-017 — verifica: los cuatro puntos de RF-017 v2 aparecen y enlazan la guía de la plataforma — depende: T026
+- [~] T037 Subir `aws-provisioning`, abrir el PR a `main` (con confirmación del usuario), fusionarlo (usuario) y seguir la primera ejecución de `provision.yml`; corregir fallos con commits pequeños — archivos: los que requiera cada corrección — cubre: RF-010b, RF-012, RF-016, RF-019, RF-020, RNF-004 — verifica: ejecución en verde con el humo D-024 en verde; ECR y roles importados conservan ARN y fecha de creación; el ALB de Express es `internal` — depende: T034, T035, T036
+- [ ] T038 Eliminar `imports.tf` tras la primera importación correcta, fechar la importación en el inventario y comprobar la idempotencia — archivos: infra/base/imports.tf (borrado), infra/INVENTARIO.md — cubre: RF-010b, RNF-003 — verifica: la ejecución de ese commit muestra «No changes» en base y routes, y solo el cambio de imagen (o ninguno) en service — depende: T037
 
 ## Correcciones de verificación
 
@@ -78,21 +94,25 @@ Dependencias explícitas: añadir `— depende: T00X`.
 | RF-008 | T005, T008 |
 | RF-009 | T005, T008, T012 |
 | RF-010 | T010, T011, T013, T016, T019 |
-| RF-010b | T003, T014, T024, T025 |
+| RF-010b | T003, T014, T037, T038 |
 | RF-010c | T002, T003 |
 | RF-011 | T010 |
-| RF-012 | T020, T024 |
+| RF-012 | T020, T034, T037 |
 | RF-013 | T021 |
-| RF-013b | T011, T012, T015, T021 |
+| RF-013b | T011, T012, T015, T021, T035 |
 | RF-014 | T020, T021 |
 | RF-015 | T020, T021 |
-| RF-016 | T013, T018, T020, T024 |
-| RF-017 | T002, T022 |
+| RF-016 | T013, T018, T020, T037 |
+| RF-017 | T002, T022, T036 |
 | RF-018 | T009 |
-| RNF-001 | T001, T010, T011, T012, T015 |
+| RF-019 | T027, T029, T030, T037 |
+| RF-020 | T031, T032, T033, T034, T037 |
+| RF-021 | T028, T034 |
+| HU-6 | T033, T037 |
+| RNF-001 | T001, T010, T011, T012, T015, T033 |
 | RNF-002 | T016, T017 |
-| RNF-003 | T025 |
-| RNF-004 | T016, T024 |
+| RNF-003 | T038 |
+| RNF-004 | T016, T037 |
 | RNF-005 | T020 |
 | RNF-006 | T012, T022 |
 | RNF-007 | T012, T015 |

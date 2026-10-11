@@ -1,39 +1,39 @@
-data "terraform_remote_state" "platform" {
+data "terraform_remote_state" "base" {
   backend = "s3"
 
   config = {
     bucket = var.state_bucket
-    key    = "geoespacial/platform.tfstate"
+    key    = "geoespacial/base.tfstate"
     region = var.region
   }
 }
 
 locals {
-  platform = data.terraform_remote_state.platform.outputs
+  base = data.terraform_remote_state.base.outputs
 }
 
 # ECS Express Mode creates the load balancer, HTTPS URL and autoscaling with the infrastructure role.
 resource "aws_ecs_express_gateway_service" "this" {
-  service_name            = local.platform.name
-  cluster                 = local.platform.cluster_name
-  execution_role_arn      = local.platform.execution_role_arn
-  infrastructure_role_arn = local.platform.infrastructure_role_arn
+  service_name            = local.base.name
+  cluster                 = local.base.cluster_name
+  execution_role_arn      = local.base.execution_role_arn
+  infrastructure_role_arn = local.base.infrastructure_role_arn
   cpu                     = var.cpu
   memory                  = var.memory
   health_check_path       = var.health_check_path
   wait_for_steady_state   = true
 
   network_configuration {
-    subnets         = local.platform.subnet_ids
-    security_groups = [local.platform.tasks_security_group_id]
+    subnets         = local.base.subnet_ids
+    security_groups = [local.base.tasks_security_group_id]
   }
 
   primary_container {
-    image          = "${local.platform.ecr_repository_url}:${var.image_tag}"
+    image          = "${local.base.ecr_repository_url}:${var.image_tag}"
     container_port = var.container_port
 
     aws_logs_configuration {
-      log_group         = local.platform.service_log_group
+      log_group         = local.base.service_log_group
       log_stream_prefix = "service"
     }
 
@@ -54,7 +54,7 @@ resource "aws_ecs_express_gateway_service" "this" {
 
     secret {
       name       = "DATABASE_URL"
-      value_from = "${local.platform.app_secret_arn}:DATABASE_URL::"
+      value_from = "${local.base.app_secret_arn}:DATABASE_URL::"
     }
   }
 

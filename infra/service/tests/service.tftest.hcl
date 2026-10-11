@@ -1,8 +1,8 @@
-# terraform test with mocked providers and a fake platform state: no AWS credentials, no real resources.
+# terraform test with mocked providers and a fake base state: no AWS credentials, no real resources.
 mock_provider "aws" {}
 
 override_data {
-  target = data.terraform_remote_state.platform
+  target = data.terraform_remote_state.base
   values = {
     outputs = {
       name                    = "urban-alert-geoespacial"
@@ -22,7 +22,7 @@ variables {
   image_tag = "0123456789abcdef"
 }
 
-run "container_matches_the_platform_contract" {
+run "container_matches_the_base_contract" {
   command = plan
 
   assert {
@@ -81,4 +81,38 @@ run "connection_budget_exceeded_is_rejected" {
   }
 
   expect_failures = [aws_ecs_express_gateway_service.this]
+}
+
+run "endpoint_is_a_bare_host" {
+  command = apply
+
+  override_resource {
+    target = aws_ecs_express_gateway_service.this
+    values = {
+      service_name  = "urban-alert-geoespacial"
+      ingress_paths = [{ access_type = "PRIVATE", endpoint = "https://urban-alert-geoespacial-abc.ecs.us-east-2.on.aws/" }]
+    }
+  }
+
+  assert {
+    condition     = output.service_endpoint == "urban-alert-geoespacial-abc.ecs.us-east-2.on.aws"
+    error_message = "service_endpoint must be the host only (no scheme, no trailing slash)."
+  }
+}
+
+run "endpoint_without_scheme_is_kept" {
+  command = apply
+
+  override_resource {
+    target = aws_ecs_express_gateway_service.this
+    values = {
+      service_name  = "urban-alert-geoespacial"
+      ingress_paths = [{ access_type = "PRIVATE", endpoint = "urban-alert-geoespacial-abc.ecs.us-east-2.on.aws" }]
+    }
+  }
+
+  assert {
+    condition     = output.service_endpoint == "urban-alert-geoespacial-abc.ecs.us-east-2.on.aws"
+    error_message = "A host without scheme must be returned unchanged."
+  }
 }

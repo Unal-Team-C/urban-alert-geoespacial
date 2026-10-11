@@ -3,7 +3,7 @@ variable "region" {
 }
 
 variable "state_bucket" {
-  description = "Bucket holding the platform stack state."
+  description = "Bucket holding the base stack state."
   type        = string
 }
 
