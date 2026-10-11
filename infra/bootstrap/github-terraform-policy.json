@@ -145,7 +145,32 @@
       "Action": "iam:CreateServiceLinkedRole",
       "Resource": "*",
       "Condition": {
-        "StringEquals": { "iam:AWSServiceName": "ecs.amazonaws.com" }
+        "StringEquals": {
+          "iam:AWSServiceName": "ecs.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "KmsDefaultKeysViaRdsAndSecretsManager",
+      "Effect": "Allow",
+      "Action": [
+        "kms:DescribeKey",
+        "kms:CreateGrant",
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:GenerateDataKey",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:ReEncryptFrom",
+        "kms:ReEncryptTo"
+      ],
+      "Resource": "arn:aws:kms:us-east-2:348364742283:key/*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": [
+            "rds.us-east-2.amazonaws.com",
+            "secretsmanager.us-east-2.amazonaws.com"
+          ]
+        }
       }
     }
   ]

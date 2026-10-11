@@ -12,7 +12,7 @@ estado_tarea: en_progreso
 
 ## Siguiente paso
 
-T037: rama subida y PR v2 abierto; esperar a que el usuario lo fusione y seguir el primer Provision v2 (gh run watch); corregir fallos con commits pequeños.
+T037: (1) usuario actualiza la política github-actions-urban-alert-terraform con el statement KMS de infra/bootstrap/github-terraform-policy.json; (2) llevar a main el commit de corrección (ignore_changes description + JSON) y seguir el nuevo Provision.
 
 ## Contexto de trabajo
 
@@ -31,4 +31,4 @@ T037: rama subida y PR v2 abierto; esperar a que el usuario lo fusione y seguir 
 
 ## Bloqueos / preguntas abiertas
 
-- ninguno (pendiente de aprobación del plan/tareas v2)
+- T037: falta permiso KMS en el rol de GitHub (acción del usuario en IAM).

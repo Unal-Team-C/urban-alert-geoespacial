@@ -183,3 +183,8 @@
 
 ## 2026-10-10 · 002-migracion-aws · T036 hecha
 - README: sección «Despliegue en AWS» v2 (plataforma compartida y SSM, diagrama, tabla de piezas con ALB interno, tabla de rutas pública/interna, qué necesita Reportes: execute-api:Invoke + SigV4, arranque con paso de la plataforma, workflows v2, orden de Deprovision respecto a la plataforma, costes); INVENTARIO (base en la VPC compartida, stack routes, política de la plataforma, sección 4 plataforma externa); bootstrap README (política github-actions-urban-alert-platform); CLAUDE.md. Verificado: los cuatro puntos de RF-017 v2 presentes y enlazados; suite completa: pytest 94, terraform test base 7/service 6/routes 6, fmt, actionlint, shellcheck y pruebas de scripts en verde.
+
+## 2026-10-11 · 002-migracion-aws · T037: primer Provision v2 falló en base (run 38109542072)
+- OK: pruebas, check-platform, importación de los 6 recursos (ECR, roles, adjuntos, read-project-secrets), creación de SG, subnet group, secreto de la app, logs, ciclo de vida ECR (estado parcial en geoespacial/base.tfstate; el siguiente apply continúa).
+- Error 1: iam:UpdateRoleDescription denegado (el código ponía descripciones distintas a las de la consola). Corrección: sin `description` en los roles y `ignore_changes = [description]`.
+- Error 2: RDS CreateDBInstance → KMSKeyNotAccessibleFault (clave por defecto aws/rds): el rol no tiene permisos de KMS. Corrección: statement KmsDefaultKeysViaRdsAndSecretsManager en infra/bootstrap/github-terraform-policy.json (kms:* necesarios, condicionado a kms:ViaService rds/secretsmanager us-east-2). El usuario debe aplicarlo a la política gestionada en AWS.

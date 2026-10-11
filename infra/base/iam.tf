@@ -8,8 +8,7 @@ locals {
 }
 
 resource "aws_iam_role" "execution" {
-  name        = "urban-alert-ecs-execution-role"
-  description = "ECS task execution: pull images, write logs, read the service secrets"
+  name = "urban-alert-ecs-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -19,6 +18,11 @@ resource "aws_iam_role" "execution" {
       Action    = "sts:AssumeRole"
     }]
   })
+
+  # Imported role: keep the description it was created with (changing it needs iam:UpdateRoleDescription).
+  lifecycle {
+    ignore_changes = [description]
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "execution_managed" {
@@ -54,8 +58,7 @@ resource "aws_iam_role_policy" "execution_secrets" {
 }
 
 resource "aws_iam_role" "infrastructure" {
-  name        = "urban-alert-ecs-infrastructure-role"
-  description = "Lets ECS Express Mode manage the load balancer, certificate, security groups and autoscaling"
+  name = "urban-alert-ecs-infrastructure-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -65,6 +68,10 @@ resource "aws_iam_role" "infrastructure" {
       Action    = "sts:AssumeRole"
     }]
   })
+
+  lifecycle {
+    ignore_changes = [description]
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "infrastructure_managed" {
