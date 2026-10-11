@@ -85,3 +85,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T011 hecha
 - ecr.tf: repo inmutable, scan on push, AES256, force_delete = allow_destroy, ciclo de vida de N imágenes. iam.tf: roles execution (ecs-tasks) e infrastructure (ecs) con sus políticas gestionadas; read-project-secrets = GetSecretValue sobre urban-alert-* y sobre rds!* condicionado al tag aws:rds:primaryDBInstanceArn de esta base (evita dependencia circular con RDS). Verificado: validate «Success», fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T012 hecha
+- rds.tf: subnet group de las subredes predeterminadas; PG var.db_engine_version, micro, gp3 20→50, cifrada, Single-AZ, privada, SG rds, backups 7 días, manage_master_user_password, deletion_protection = !allow_destroy, snapshot final ${name}-final-${suffix}. secrets.tf: random_password (32, sin símbolos), secreto ${name}-db con username/password/host/port/dbname/DATABASE_URL (?sslmode=require), recovery_window 0. Verificado: validate «Success», fmt limpio.

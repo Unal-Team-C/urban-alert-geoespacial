@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T012
+tarea_actual: T013
 estado_tarea: -
 
 ## Siguiente paso
 
-T012: rds.tf (PG17 micro, privada, cifrada, backups, managed master password, protección/snapshot por allow_destroy) + secrets.tf (random_password, JSON con DATABASE_URL sslmode=require, recovery 0).
+T013: ecs.tf (clúster), logs.tf (2 grupos, 30 días), schema_task.tf (Fargate X86_64, migrate, secretos), outputs.tf.
 
 ## Contexto de trabajo
 
