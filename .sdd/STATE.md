@@ -12,7 +12,7 @@ estado_tarea: -
 
 ## Siguiente paso
 
-Ejecutar `/sdd-plan` para specs/002-migracion-aws (spec aprobada 2026-10-10). Incluir política IAM definitiva si cambia respecto a la entregada, y la lista final de variables/secretos de GitHub.
+El usuario revisa y aprueba specs/002-migracion-aws/plan.md (decisiones a validar: D-001 dos stacks, D-002 Express en Terraform, D-003 tarea ECS para el esquema, D-004 orden, D-005 imports de un solo uso, D-016 tamaños). Con la aprobación: `Estado: aprobado` en el plan → `/sdd-tasks`.
 
 ## Contexto de trabajo
 

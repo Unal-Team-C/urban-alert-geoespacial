@@ -32,3 +32,9 @@
 
 ## 2026-10-10 · 002-migracion-aws · Spec aprobada
 - Aprobada por el usuario. Confirmado: política de despliegue corregida (ECR urban-alert-*, PassRole), bucket `urban-alert-tfstate-348364742283`, política `github-actions-urban-alert-terraform` adjunta, secretos/variables de GitHub creados. RDS/SG/secreto de BD no existen: los crea Terraform.
+
+## 2026-10-10 · 002-migracion-aws · Plan redactado (borrador)
+- D-001 dos stacks Terraform (platform/service); D-002 servicio Express en Terraform; D-003 esquema con tarea ECS puntual `python -m app.db.migrate` con la imagen del servicio; D-004 platform antes del push de imagen (ECR puede no existir tras deprovision).
+- D-005 imports.tf de un solo uso + infra/INVENTARIO.md; D-006 VPC predeterminada; D-007 maestro gestionado por RDS + secreto propio de la app; D-008 sslmode=require; D-009 logs JSON stdlib; D-010 uvicorn graceful 20 s; D-011 X86_64.
+- D-012/D-013 deprovision con input de confirmación, sin GitHub environments; D-015 precondición pool×tareas ≤ 50; D-019 clúster propio.
+- GitHub: solo AWS_ROLE_ARN + AWS_REGION; el resto de variables antiguas sobra. Investigación en research.md.
