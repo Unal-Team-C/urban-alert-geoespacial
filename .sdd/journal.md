@@ -174,3 +174,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T033 hecha
 - scripts/smoke-gateway-geoespacial.sh: GET reports 200 + array (reintentos SMOKE_ATTEMPTS, por defecto 30×10 s), GET coordinates/<uuid> 404 con cuerpo del servicio ({code:404}, distingue del 404 del gateway), POST sin firma 403, GET /health 404. Verificado: shellcheck OK; contra el gateway real sin rutas del servicio falla en las 3 primeras con mensaje claro (404 {"message":"Not Found"}) y /health ok (exit 3).
+
+## 2026-10-10 · 002-migracion-aws · T034 hecha
+- provision.yml v2: job test añade scripts/tests y el stack routes; job provision: credenciales → check-platform.sh → base → salidas → ECR → esquema (privado) → service (salidas endpoint/cluster/nombre) → buscar-listener-express.sh → routes (express_endpoint, express_listener_arn) → smoke-gateway-geoespacial.sh → resumen con rutas públicas e interna. Desviación menor: la comprobación de la plataforma va tras el job de pruebas (necesita credenciales), pero antes de cualquier cambio, que es lo que pide RF-021. Verificado: actionlint sin errores; orden = tabla de la revisión v2.

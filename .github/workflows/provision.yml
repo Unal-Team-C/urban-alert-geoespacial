@@ -1,5 +1,7 @@
 # Provisioning (spec 002, RF-012): every push to main tests, provisions and deploys.
-# Order (plan D-004): tests → base → image → schema → service → health check.
+# Order (plan Revisión v2, D-025): tests → platform check → base → image → schema → service → listener → routes → smoke.
+# The service runs in the private network of the shared platform (Unal-Team-C/urban-alert-plataforma) and is
+# reachable only through its API Gateway.
 name: Provision
 
 on:
@@ -28,6 +30,9 @@ jobs:
       - name: Unit and integration tests (PostGIS in compose)
         run: docker compose --profile test run --rm --build tests
 
+      - name: Script tests
+        run: bash scripts/tests/test-check-platform.sh
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
@@ -38,7 +43,7 @@ jobs:
 
       - name: Terraform validate and test (mocked providers)
         run: |
-          for stack in base service; do
+          for stack in base service routes; do
             terraform -chdir="infra/$stack" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="infra/$stack" validate
             terraform -chdir="infra/$stack" test
@@ -64,12 +69,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Check the shared platform is provisioned (nothing is changed before this)
+        run: scripts/check-platform.sh
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      - name: Apply base (ECR, roles, network, RDS, secret, logs, schema task)
+      - name: Apply base (ECR, roles, security groups, RDS, secret, logs, schema task)
         run: |
           terraform -chdir=infra/base init -input=false
           terraform -chdir=infra/base apply -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
@@ -104,7 +112,7 @@ jobs:
             docker push "$IMAGE"
           fi
 
-      - name: Apply database schema (one-off ECS task)
+      - name: Apply database schema (one-off ECS task in the private subnets)
         env:
           CLUSTER: ${{ steps.base.outputs.cluster }}
           TASK_DEFINITION: ${{ steps.base.outputs.schema_task }}
@@ -114,36 +122,52 @@ jobs:
           CONTAINER: ${{ steps.base.outputs.schema_container }}
         run: scripts/run-schema-task.sh
 
-      - name: Apply service (ECS Express Mode)
+      - name: Apply service (ECS Express Mode, internal load balancer)
+        id: service
         run: |
           terraform -chdir=infra/service init -input=false
           terraform -chdir=infra/service apply -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
+          {
+            echo "endpoint=$(terraform -chdir=infra/service output -raw service_endpoint)"
+            echo "cluster=$(terraform -chdir=infra/service output -raw cluster_name)"
+            echo "name=$(terraform -chdir=infra/service output -raw service_name)"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Health check on the public URL
-        id: health
+      - name: Find the 443 listener of the Express load balancer
+        id: listener
+        env:
+          CLUSTER: ${{ steps.service.outputs.cluster }}
+          SERVICE: ${{ steps.service.outputs.name }}
+        run: echo "arn=$(scripts/buscar-listener-express.sh "$CLUSTER" "$SERVICE")" >> "$GITHUB_OUTPUT"
+
+      - name: Apply routes in the shared API Gateway
+        id: routes
+        env:
+          ENDPOINT: ${{ steps.service.outputs.endpoint }}
+          LISTENER: ${{ steps.listener.outputs.arn }}
         run: |
-          url=$(terraform -chdir=infra/service output -raw service_url)
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          for attempt in $(seq 1 30); do
-            if curl -fsS --max-time 5 "$url/health"; then
-              echo
-              curl -fsS --max-time 10 "$url/api/v1/geospatial/reports?lat=4.6486&lon=-74.0628&radius=1000" >/dev/null
-              echo "Service healthy at $url"
-              exit 0
-            fi
-            echo "Attempt $attempt: not healthy yet"
-            sleep 10
-          done
-          echo "::error::$url/health did not answer 200 within 5 minutes"
-          exit 1
+          terraform -chdir=infra/routes init -input=false
+          terraform -chdir=infra/routes apply -input=false -auto-approve \
+            -var "express_endpoint=$ENDPOINT" -var "express_listener_arn=$LISTENER"
+          echo "gateway=$(terraform -chdir=infra/routes output -raw gateway_url)" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test through the gateway
+        env:
+          GATEWAY: ${{ steps.routes.outputs.gateway }}
+        run: scripts/smoke-gateway-geoespacial.sh "$GATEWAY"
 
       - name: Summary
         if: always()
         env:
-          URL: ${{ steps.health.outputs.url }}
+          GATEWAY: ${{ steps.routes.outputs.gateway }}
         run: |
           {
             echo "### Servicio Geoespacial"
             echo "- Commit: \`$IMAGE_TAG\`"
-            echo "- URL: ${URL:-(no disponible)}"
+            if [ -n "$GATEWAY" ]; then
+              echo "- Público: \`GET $GATEWAY/api/v1/geoespacial/reports\`, \`GET $GATEWAY/api/v1/geoespacial/coordinates/{id}\`"
+              echo "- Interno (firma IAM): \`POST $GATEWAY/api/v1/geoespacial/coordinates\`"
+            else
+              echo "- Rutas del gateway: (no disponibles)"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

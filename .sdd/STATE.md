@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T034
+tarea_actual: T035
 estado_tarea: -
 
 ## Siguiente paso
 
-T034: provision.yml v2.
+T035: deprovision.yml v2 (routes → service → base).
 
 ## Contexto de trabajo
 
