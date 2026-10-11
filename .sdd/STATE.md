@@ -6,21 +6,22 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: clarify
+fase: plan
 tarea_actual: -
 estado_tarea: -
 
 ## Siguiente paso
 
-Esperar a que el usuario revise y apruebe specs/002-migracion-aws/spec.md (estado: aclarada); con la aprobación, marcar `Estado: aprobada` y ejecutar `/sdd-plan`. El plan debe incluir la política IAM ampliada del rol de GitHub (Terraform: IAM/ECR/logs/S3 estado/ecs:RunTask para el esquema, destroy).
+Ejecutar `/sdd-plan` para specs/002-migracion-aws (spec aprobada 2026-10-10). Incluir política IAM definitiva si cambia respecto a la entregada, y la lista final de variables/secretos de GitHub.
 
 ## Contexto de trabajo
 
 <!-- Lo que se perdería si la sesión se corta y no está en otros archivos:
      hipótesis en curso, comandos útiles, gotchas, archivos a mirar, lo que ibas a probar. -->
 
+- AWS ya configurado por el usuario (us-east-2, cuenta 348364742283): OIDC + rol GitHub con políticas `github-actions-urban-alertPolicy` y `github-actions-urban-alert-terraform`, roles `urban-alert-ecs-*`, ECR `urban-alert-geoespacial`, bucket de estado `urban-alert-tfstate-348364742283` (confirmado). RDS, SG y secreto de BD NO existen: los crea Terraform (no van al inventario de importación). Secretos/variables de GitHub ya creados (AWS_ROLE_ARN, AWS_REGION, etc.).
 - Rama `aws-provisioning`. Numeración 002 porque `docs/` ya contiene la spec 001-servicio-geoespacial original.
 
 ## Bloqueos / preguntas abiertas
 
-- ninguno (spec aclarada, pendiente de aprobación).
+- ninguno

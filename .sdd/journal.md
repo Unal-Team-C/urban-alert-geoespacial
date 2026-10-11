@@ -29,3 +29,6 @@
 - Flujo manual = desaprovisionamiento, con confirmación explícita, copia final de la BD y sin tocar recursos de arranque (HU-2, RF-013, RF-013b).
 - Recursos creados a mano se importan a Terraform y se listan en un pseudoinventario (RF-010b); OIDC, rol de flujos y bucket de estado quedan fuera como arranque (RF-010c, supuesto para no autodestruir credenciales).
 - El esquema lo aplica el flujo de aprovisionamiento en cada ejecución, antes de desplegar (RF-016).
+
+## 2026-10-10 · 002-migracion-aws · Spec aprobada
+- Aprobada por el usuario. Confirmado: política de despliegue corregida (ECR urban-alert-*, PassRole), bucket `urban-alert-tfstate-348364742283`, política `github-actions-urban-alert-terraform` adjunta, secretos/variables de GitHub creados. RDS/SG/secreto de BD no existen: los crea Terraform.

@@ -1,7 +1,7 @@
 # Especificación: Migración del Servicio Geoespacial a AWS
 
 - **ID**: 002-migracion-aws
-- **Estado**: aclarada <!-- borrador | aclarada | aprobada | implementada -->
+- **Estado**: aprobada <!-- borrador | aclarada | aprobada | implementada -->
 - **Creada**: 2026-10-10
 - **Entrada original**: "Migración del servicio geoespacial a AWS (rama aws-provisioning): adaptar el código para la nube y crear CI/CD con GitHub Actions usando Terraform como base. Un flujo se ejecuta al hacer commit a main, que es el de aprovisionamiento. El otro flujo se ejecuta manualmente." + alcance acordado en la conversación: configuración para la nube (cadena de conexión desde el almacén de secretos, conexión cifrada, valores de producción, logs para CloudWatch), imagen apta para ECS Express Mode, solo el esquema en RDS PostgreSQL 17 + PostGIS (sin datos semilla ni base de pruebas), infraestructura como código con estado remoto, documentación de despliegue y de variables/secretos.
 
