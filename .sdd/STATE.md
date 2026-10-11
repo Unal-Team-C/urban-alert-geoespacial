@@ -8,11 +8,11 @@
 feature_activa: 002-migracion-aws
 fase: implement
 tarea_actual: T038
-estado_tarea: -
+estado_tarea: en_progreso
 
 ## Siguiente paso
 
-T038: borrar infra/base/imports.tf, fechar la importación en INVENTARIO.md, push a main (con confirmación) y comprobar No changes en base y routes.
+T038: git rm infra/base/imports.tf; quitar override_resource de imports? (no: siguen siendo válidos); fechar importación en INVENTARIO.md; push a main; comprobar No changes en base y routes.
 
 ## Contexto de trabajo
 
@@ -26,7 +26,6 @@ T038: borrar infra/base/imports.tf, fechar la importación en INVENTARIO.md, pus
 - Terraform local: wrapper `<scratchpad>/tf` (podman, hashicorp/terraform:1.16.5, caché de plugins en ~/.cache/tf-plugins). En zsh no usar `$TF` con espacios.
 - Riesgo abierto: el SG de tareas no tiene reglas de entrada; se asume que Express añade su propio SG ALB→tareas (comprobar en T024).
 - Supuesto a comprobar en T024: RDS etiqueta su secreto maestro con `aws:rds:primaryDBInstanceArn` (la política read-project-secrets lo usa como condición). Los roles urban-alert-ecs-* son compartibles por nombre pero este stack los destruye al desaprovisionar: avisar al usuario.
-- No lanzar Deprovision mientras exista infra/platform/imports.tf (T025 lo elimina tras el primer apply).
 - Rama `aws-provisioning`. Numeración 002 porque `docs/` ya contiene la spec 001-servicio-geoespacial original.
 
 ## Bloqueos / preguntas abiertas

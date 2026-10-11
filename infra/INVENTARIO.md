@@ -4,7 +4,7 @@ Cuenta `348364742283`, región `us-east-2`. Spec 002, RF-010b y RF-010c.
 
 ## 1. Recursos creados a mano e importados a Terraform
 
-Se crearon en la consola antes de existir el código. El stack `infra/base` los importa en su primera ejecución con los bloques de `infra/base/imports.tf`, que se borra después (plan D-005): un bloque `import` permanente fallaría tras un desaprovisionamiento, porque el recurso ya no existiría.
+Se crearon en la consola antes de existir el código. El stack `infra/base` los importó en su primera ejecución con los bloques de `infra/base/imports.tf`, que después se borró (plan D-005): un bloque `import` permanente fallaría tras un desaprovisionamiento, porque el recurso ya no existiría.
 
 Si se pierde el estado de Terraform con estos recursos todavía en AWS, se vuelven a importar copiando los bloques de la última columna a un `imports.tf` temporal.
 
@@ -19,7 +19,7 @@ Si se pierde el estado de Terraform con estos recursos todavía en AWS, se vuelv
 
 La regla de ciclo de vida del repositorio ECR (`aws_ecr_lifecycle_policy.this`) no se importa: la API de AWS la sobrescribe al crearla (`PutLifecyclePolicy`), exista o no.
 
-Fecha de importación: _pendiente (se rellena al cerrar T025)_.
+Fecha de importación: **2026-10-11**, en el *Provision* run 38109542072 (los 6 importados sin recrearse; `imports.tf` se borró en T038).
 
 ## 2. Recursos creados por Terraform
 

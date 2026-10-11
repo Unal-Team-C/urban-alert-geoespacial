@@ -32,7 +32,8 @@ override_data {
   values = { value = "subnet-priv-a,subnet-priv-b,subnet-priv-c" }
 }
 
-# Resources in imports.tf cannot be imported from a mock provider: give them fixed values instead.
+# Fixed values for the resources imported from the console (infra/INVENTARIO.md), as the mock cannot invent ARNs
+# that later resources depend on. Also needed again if an imports.tf is ever restored (mocks cannot import).
 override_resource {
   target = aws_ecr_repository.this
   values = { repository_url = "348364742283.dkr.ecr.us-east-2.amazonaws.com/urban-alert-geoespacial" }
