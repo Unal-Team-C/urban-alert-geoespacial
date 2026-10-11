@@ -91,3 +91,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T013 hecha
 - ecs.tf (clúster ${name}), logs.tf (/ecs/${name} y /ecs/${name}-schema, 30 días), schema_task.tf (Fargate X86_64 256/512, imagen ECR:${image_tag}, python -m app.db.migrate, env DB_*, secretos username/password del maestro y password de la app, awslogs), outputs.tf (los 6 del plan + region, name, roles, app_secret_arn, service_log_group, schema_container_name para el stack service y el script). Verificado: validate «Success», fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T014 hecha
+- infra/platform/imports.tf: 6 bloques import (ECR, 2 roles, 2 adjuntos, read-project-secrets), con comentario de borrado tras el primer apply. Verificado: validate «Success», fmt limpio, script de cotejo: los 6 coinciden con INVENTARIO.md.

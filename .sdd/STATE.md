@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T014
+tarea_actual: T015
 estado_tarea: -
 
 ## Siguiente paso
 
-T014: infra/platform/imports.tf con los 6 bloques import del inventario.
+T015: infra/platform/tests/platform.tftest.hcl con mock_provider (protección/allow_destroy, RDS privada/cifrada/backups, SG, secreto).
 
 ## Contexto de trabajo
 
