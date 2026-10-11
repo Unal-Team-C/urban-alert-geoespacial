@@ -156,3 +156,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T027 hecha
 - infra/base/network.tf: data aws_ssm_parameter /urban-alert/plataforma/vpc-id y subredes-privadas (nonsensitive: los IDs no son secretos, el proveedor marca todo SSM como sensible); SG en esa VPC; rds.tf subnet group = subredes privadas; outputs subnet_ids (todas) y vpc_id. Prueba nueva uses_the_shared_private_network con override_data. Verificado: base test 7 passed, service 4 passed, fmt limpio.
+
+## 2026-10-10 · 002-migracion-aws · T028 hecha
+- scripts/buscar-listener-express.sh copiado de la plataforma (solo cambia el comentario de origen); scripts/check-platform.sh (aws ssm get-parameters de los 9 parámetros, falla listando los que faltan; prefijo configurable); scripts/tests/test-check-platform.sh con aws simulado (4 casos). Verificado: 4 ok; shellcheck sin avisos.

@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T028
+tarea_actual: T029
 estado_tarea: -
 
 ## Siguiente paso
 
-T028: copiar buscar-listener-express.sh; crear check-platform.sh + scripts/tests/test-check-platform.sh con aws simulado.
+T029: assignPublicIp=DISABLED en run-schema-task.sh.
 
 ## Contexto de trabajo
 
