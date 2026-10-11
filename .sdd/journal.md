@@ -121,3 +121,9 @@
 
 ## 2026-10-10 · 002-migracion-aws · T023 hecha
 - CLAUDE.md: gotcha DOCKER_CONFIG/podman, stacks y estado, workflows, migrate, comandos de validación con Podman (terraform 1.16.5, actionlint 1.7.7, shellcheck). Cabecera de tasks.md alineada con esas versiones. Verificado: los comandos coinciden con los usados en T010–T021.
+
+## 2026-10-11 · 002-migracion-aws · Cambio de requisitos: exposición por Amazon API Gateway
+- Usuario: el servicio debe exponerse por **Amazon API Gateway**, **compartido** por todos los microservicios de UrbanAlert, y accesible **solo** a través del gateway (sin URL pública propia).
+- Consecuencias (docs ECS Express, express-service-work.html): con subredes privadas Express crea un ALB **interno** y no asigna IP pública → las tareas necesitan NAT Gateway o endpoints de VPC; la VPC predeterminada solo tiene subredes públicas → D-006 cambia. Express crea su propio SG de ALB y de servicio (el SG que pasamos es adicional): supuesto del plan confirmado.
+- Pendiente de investigar en el replan: integración API Gateway HTTP API + VPC Link con el ALB interno de Express (reglas por host-header).
+- Primer Provision (run 38101589201): pruebas OK; falló en configure-aws-credentials («Not authorized to perform sts:AssumeRoleWithWebIdentity»). No se creó nada en AWS. Causa probable: la relación de confianza del rol no coincide con `repo:Unal-Team-C/urban-alert-geoespacial:ref:refs/heads/main`.

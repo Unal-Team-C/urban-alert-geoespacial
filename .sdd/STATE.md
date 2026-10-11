@@ -8,11 +8,11 @@
 feature_activa: 002-migracion-aws
 fase: implement
 tarea_actual: T024
-estado_tarea: en_progreso
+estado_tarea: bloqueada
 
 ## Siguiente paso
 
-T024: rama subida y PR aws-provisioning → main abierto; esperar a que el usuario lo fusione y seguir la primera ejecución de Provision (gh run watch); corregir fallos con commits pequeños a main.
+(1) Usuario comparte la relación de confianza del rol de GitHub para arreglar el AssumeRoleWithWebIdentity. (2) Actualizar spec/plan/tareas de 002 con la exposición por Amazon API Gateway compartido y servicio privado (ver journal 2026-10-11); decidir dónde vive el gateway compartido y NAT vs endpoints. No fusionar más cambios de infra hasta replanificar.
 
 ## Contexto de trabajo
 
@@ -31,4 +31,5 @@ T024: rama subida y PR aws-provisioning → main abierto; esperar a que el usuar
 
 ## Bloqueos / preguntas abiertas
 
-- ninguno (scope workflow concedido; rama subida). Esperando que el usuario fusione el PR #1.
+- T024: el rol OIDC rechaza el token de GitHub (confianza). Nada creado en AWS.
+- Cambio de requisitos (API Gateway compartido + servicio privado) pendiente de reflejar en spec/plan/tareas.

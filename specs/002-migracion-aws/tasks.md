@@ -57,7 +57,7 @@ Dependencias explícitas: añadir `— depende: T00X`.
 
 ## Fase 6: Despliegue real (requiere acciones del usuario en GitHub)
 
-- [~] T024 Abrir el PR `aws-provisioning` → `main` (con confirmación del usuario), fusionarlo y seguir la primera ejecución de `provision.yml`; corregir fallos (p. ej. permisos IAM) con commits pequeños a `main`, actualizando `infra/bootstrap/*.json` si cambia alguna política — archivos: los que requiera cada corrección — cubre: RF-010b, RF-012, RF-016, RNF-004 — verifica: ejecución en verde; `curl <service_url>/health` → 200; ECR y roles importados conservan su ARN y fecha de creación — depende: T020, T021, T022
+- [!] T024 Abrir el PR `aws-provisioning` → `main` (con confirmación del usuario), fusionarlo y seguir la primera ejecución de `provision.yml`; corregir fallos (p. ej. permisos IAM) con commits pequeños a `main`, actualizando `infra/bootstrap/*.json` si cambia alguna política — archivos: los que requiera cada corrección — cubre: RF-010b, RF-012, RF-016, RNF-004 — verifica: ejecución en verde; `curl <service_url>/health` → 200; ECR y roles importados conservan su ARN y fecha de creación — depende: T020, T021, T022 — bloqueo: el rol OIDC rechaza el token (sts:AssumeRoleWithWebIdentity); además, cambio de requisitos a API Gateway pendiente de replanificar
 - [ ] T025 Eliminar `imports.tf` tras la primera importación correcta, marcar en el inventario la fecha de importación y comprobar la idempotencia — archivos: infra/platform/imports.tf (borrado), infra/INVENTARIO.md — cubre: RF-010b, RNF-003 — verifica: la ejecución de `provision.yml` de ese commit muestra «No changes» en platform y solo el cambio de imagen (o ninguno) en service — depende: T024
 
 ## Correcciones de verificación
