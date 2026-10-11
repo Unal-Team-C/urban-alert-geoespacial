@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T037
-estado_tarea: en_progreso
+tarea_actual: T038
+estado_tarea: -
 
 ## Siguiente paso
 
-T037: (1) usuario actualiza la política github-actions-urban-alert-terraform con el statement KMS de infra/bootstrap/github-terraform-policy.json; (2) llevar a main el commit de corrección (ignore_changes description + JSON) y seguir el nuevo Provision.
+T038: borrar infra/base/imports.tf, fechar la importación en INVENTARIO.md, push a main (con confirmación) y comprobar No changes en base y routes.
 
 ## Contexto de trabajo
 
@@ -31,4 +31,4 @@ T037: (1) usuario actualiza la política github-actions-urban-alert-terraform co
 
 ## Bloqueos / preguntas abiertas
 
-- T037: falta permiso KMS en el rol de GitHub (acción del usuario en IAM).
+- ninguno. Pendiente: llevar la corrección de buscar-listener-express.sh a urban-alert-plataforma (su script no funciona con Express real).
