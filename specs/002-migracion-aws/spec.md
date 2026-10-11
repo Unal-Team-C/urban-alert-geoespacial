@@ -1,13 +1,13 @@
 # Especificación: Migración del Servicio Geoespacial a AWS
 
 - **ID**: 002-migracion-aws
-- **Estado**: borrador <!-- borrador | aclarada | aprobada | implementada -->
+- **Estado**: aclarada <!-- borrador | aclarada | aprobada | implementada -->
 - **Creada**: 2026-10-10
 - **Entrada original**: "Migración del servicio geoespacial a AWS (rama aws-provisioning): adaptar el código para la nube y crear CI/CD con GitHub Actions usando Terraform como base. Un flujo se ejecuta al hacer commit a main, que es el de aprovisionamiento. El otro flujo se ejecuta manualmente." + alcance acordado en la conversación: configuración para la nube (cadena de conexión desde el almacén de secretos, conexión cifrada, valores de producción, logs para CloudWatch), imagen apta para ECS Express Mode, solo el esquema en RDS PostgreSQL 17 + PostGIS (sin datos semilla ni base de pruebas), infraestructura como código con estado remoto, documentación de despliegue y de variables/secretos.
 
 ## 1. Resumen
 
-Llevar el Servicio Geoespacial, que hoy solo se ejecuta en contenedores locales, a un entorno gestionado en AWS: base de datos espacial gestionada, servicio de contenedores con escalado automático y URL HTTPS, y toda la infraestructura descrita como código. El aprovisionamiento y el despliegue se automatizan con dos flujos de GitHub Actions: uno que se ejecuta en cada commit a `main` y otro que se lanza manualmente. El contrato de la API no cambia.
+Llevar el Servicio Geoespacial, que hoy solo se ejecuta en contenedores locales, a un entorno gestionado en AWS: base de datos espacial gestionada, servicio de contenedores con escalado automático y URL HTTPS, y toda la infraestructura descrita como código. El aprovisionamiento y el despliegue se automatizan con dos flujos de GitHub Actions: uno de aprovisionamiento que se ejecuta en cada commit a `main` y otro de desaprovisionamiento que se lanza manualmente. El contrato de la API no cambia.
 
 ## 2. Problema y contexto
 
@@ -18,7 +18,7 @@ Llevar el Servicio Geoespacial, que hoy solo se ejecuta en contenedores locales,
 
 ## 3. Usuarios y actores
 
-- **Equipo de desarrollo**: publicar cambios del servicio y de la infraestructura con un commit a `main`, sin pasos manuales en la consola, y poder lanzar a mano la operación del flujo manual.
+- **Equipo de desarrollo**: publicar cambios del servicio y de la infraestructura con un commit a `main`, sin pasos manuales en la consola, y poder eliminar el entorno a mano cuando no se usa.
 - **Servicio de Reportes y frontend (consumidores)**: llamar a una URL estable del servicio en la nube con el mismo contrato que en local.
 - **Revisor / docente**: entender desde el repositorio qué infraestructura existe, cómo se despliega y qué variables y secretos hacen falta.
 
@@ -34,12 +34,17 @@ Como integrante del equipo quiero que un commit a `main` aprovisione la infraest
 3. Dado un commit a `main` sin cambios de infraestructura, cuando se ejecuta el flujo, entonces el aprovisionamiento informa de que no hay cambios en la infraestructura.
 4. Dados dos commits seguidos a `main`, cuando sus flujos coinciden en el tiempo, entonces se ejecutan uno detrás de otro, nunca a la vez sobre la misma infraestructura.
 
-### HU-2: Operación manual (Prioridad: P1)
+### HU-2: Desaprovisionar el entorno a mano (Prioridad: P1)
 
-Como integrante del equipo quiero lanzar a mano un segundo flujo para [NEEDS CLARIFICATION: ¿qué hace el flujo manual? Opciones: (a) desplegar la aplicación (construir y publicar la imagen y actualizar el servicio) sin tocar la infraestructura; (b) destruir el entorno para no generar costes; (c) aplicar el esquema de la base de datos; (d) otra].
+Como integrante del equipo quiero lanzar a mano un flujo que elimine el entorno de la nube, para no generar costes cuando no se usa y poder recrearlo después con un commit a `main`.
 
 **Criterios de aceptación**
-1. Dado el repositorio en GitHub, cuando un integrante lanza el flujo manual, entonces se ejecuta solo bajo demanda (nunca por un commit) y el resultado queda registrado en la ejecución del flujo.
+1. Dado el repositorio en GitHub, cuando un integrante lanza el flujo de desaprovisionamiento y confirma la operación, entonces se eliminan los recursos del servicio gestionados como código y el resultado queda registrado en la ejecución del flujo.
+2. Dado que se lanza el flujo sin la confirmación explícita, cuando se ejecuta, entonces no elimina nada y termina indicando que falta la confirmación.
+3. Dada la base de datos con datos, cuando se desaprovisiona, entonces antes de eliminarla queda una copia final de la que se puede restaurar.
+4. Dado el entorno desaprovisionado, cuando se hace un nuevo commit a `main`, entonces el flujo de aprovisionamiento recrea el entorno completo y el servicio vuelve a estar saludable.
+5. Dado el entorno desaprovisionado, cuando se vuelve a lanzar el flujo de aprovisionamiento o de desaprovisionamiento, entonces los flujos siguen pudiendo autenticarse en AWS (los recursos de arranque no se eliminan).
+6. El flujo nunca se ejecuta por un commit; solo bajo demanda.
 
 ### HU-3: Base de datos gestionada con el esquema del servicio (Prioridad: P1)
 
@@ -74,7 +79,11 @@ Como revisor o nuevo integrante quiero encontrar en el repositorio cómo se desp
 - Primer despliegue: la base aún no existe o tarda varios minutos en estar disponible → el servicio no se da por desplegado hasta que `/health` responde saludable.
 - La base de datos no está disponible tras el despliegue → `/health` devuelve no disponible y la plataforma no envía tráfico a esas tareas.
 - El escalado llega al máximo de tareas → el total de conexiones a la base no supera 50.
-- Se intenta borrar la base desde el código por error → la base tiene protección contra borrado y el aprovisionamiento falla en lugar de borrarla.
+- Se intenta borrar la base desde el código por error en el flujo de aprovisionamiento → la base tiene protección contra borrado y el aprovisionamiento falla en lugar de borrarla.
+- Se lanza el desaprovisionamiento con el entorno ya eliminado → termina sin error indicando que no hay nada que eliminar.
+- Se lanza el desaprovisionamiento mientras corre un aprovisionamiento → espera a que termine (RF-015).
+- El registro de imágenes tiene imágenes al desaprovisionar → se eliminan junto con el registro.
+- Un recurso del inventario ya no existe en AWS al importarlo → la importación falla indicando qué recurso falta, sin crear uno nuevo a ciegas.
 - El flujo de aprovisionamiento se lanza desde una rama distinta de `main` o desde un fork → no obtiene credenciales de AWS.
 
 ## 5. Requisitos funcionales
@@ -88,13 +97,16 @@ Como revisor o nuevo integrante quiero encontrar en el repositorio cómo se desp
 - **RF-007**: Cada imagen publicada DEBE etiquetarse con el identificador del commit del que se construyó, de forma que la versión desplegada se pueda rastrear hasta su commit.
 - **RF-008**: El esquema de la base en la nube DEBE salir únicamente de `db/schema.sql`, aplicarse de forma que repetirlo no cause errores ni cambios, y no incluir datos semilla ni la base de pruebas.
 - **RF-009**: El servicio DEBE conectarse a la base con un usuario propio con permisos solo de lectura e inserción sobre la tabla de coordenadas, distinto del usuario administrador.
-- **RF-010**: Toda la infraestructura del servicio en la nube DEBE estar definida como código en el repositorio: base de datos PostgreSQL 17 con PostGIS, reglas de red de acceso a la base, secreto de conexión, registro de imágenes, servicio de contenedores con escalado automático, comprobación de salud y logs. [NEEDS CLARIFICATION: los recursos ya creados a mano (registro de imágenes `urban-alert-geoespacial`, roles `urban-alert-ecs-*`, y la base de datos si ya se creó siguiendo la guía) ¿se importan para que los gestione el código o se referencian como recursos externos existentes?]
+- **RF-010**: Toda la infraestructura del servicio en la nube DEBE estar definida como código en el repositorio: base de datos PostgreSQL 17 con PostGIS, reglas de red de acceso a la base, secreto de conexión, registro de imágenes, roles de ejecución e infraestructura del servicio, servicio de contenedores con escalado automático, comprobación de salud y logs.
+- **RF-010b**: Los recursos que ya se crearon a mano (registro de imágenes `urban-alert-geoespacial`, roles `urban-alert-ecs-execution-role` y `urban-alert-ecs-infrastructure-role`, y la base de datos, grupos de seguridad y secreto si ya existen) DEBEN importarse al código sin recrearlos ni perder datos. La lista de recursos importados, con su identificador en AWS, DEBE quedar en el repositorio como un inventario legible (pseudoinventario) que también sirva para importarlos de nuevo si el estado se pierde.
+- **RF-010c**: Los recursos de arranque (proveedor OIDC de GitHub, rol de los flujos y almacenamiento del estado) DEBEN quedar fuera de lo que gestiona y elimina el código, y figurar en el inventario como recursos externos de arranque.
 - **RF-011**: El estado de la infraestructura como código DEBE guardarse de forma remota, cifrada y con bloqueo, de modo que dos ejecuciones no lo modifiquen a la vez y cualquier ejecución (flujo o local) parta del mismo estado.
-- **RF-012**: El flujo de aprovisionamiento DEBE ejecutarse en cada commit (push) a `main` y, en este orden: ejecutar las pruebas unitarias y de integración; construir y publicar la imagen; calcular y aplicar los cambios de infraestructura; desplegar la nueva versión del servicio; comprobar que `/health` responde saludable. Cualquier paso fallido DEBE detener los siguientes.
-- **RF-013**: Debe existir un segundo flujo que solo se ejecute manualmente (bajo demanda desde GitHub), con el comportamiento que se defina en HU-2.
+- **RF-012**: El flujo de aprovisionamiento DEBE ejecutarse en cada commit (push) a `main` y, en este orden: ejecutar las pruebas unitarias y de integración; construir y publicar la imagen; calcular y aplicar los cambios de infraestructura; aplicar el esquema de la base (RF-016); desplegar la nueva versión del servicio; comprobar que `/health` responde saludable. Cualquier paso fallido DEBE detener los siguientes.
+- **RF-013**: Debe existir un flujo de desaprovisionamiento que solo se ejecute manualmente (bajo demanda desde GitHub) y que exija una confirmación explícita al lanzarlo (p. ej. escribir el nombre del entorno). Sin la confirmación no elimina nada.
+- **RF-013b**: El desaprovisionamiento DEBE eliminar todos los recursos gestionados como código, salvo los de arranque (RF-010c), y DEBE dejar una copia final de la base antes de eliminarla. La protección contra borrado de la base (RNF-007) solo la desactiva este flujo, nunca el de aprovisionamiento.
 - **RF-014**: Los flujos DEBEN autenticarse en AWS con credenciales temporales (federación de identidad de GitHub), sin claves de acceso de larga duración guardadas en GitHub.
 - **RF-015**: Los flujos DEBEN impedir ejecuciones simultáneas sobre la misma infraestructura (las posteriores esperan a que termine la anterior).
-- **RF-016**: La aplicación del esquema en la base [NEEDS CLARIFICATION: ¿la hace el flujo de aprovisionamiento en cada ejecución (antes de desplegar la nueva versión) o es un paso manual documentado?].
+- **RF-016**: El flujo de aprovisionamiento DEBE aplicar `db/schema.sql` y los permisos del usuario de la aplicación (RF-009) en cada ejecución, después de aprovisionar la base y antes de desplegar la nueva versión; si la aplicación del esquema falla, no se despliega. Ejecutarlo sobre una base que ya tiene el esquema no produce errores ni cambios (RF-008).
 - **RF-017**: El repositorio DEBE documentar: los recursos de arranque que se crean a mano una sola vez y cómo crearlos; la lista de variables y secretos de GitHub con su propósito y un ejemplo; cómo funciona cada flujo; y la URL donde queda publicado el servicio.
 - **RF-018**: El entorno local (`docker-compose` con base de pruebas y datos semilla) DEBE seguir funcionando sin cambios en su forma de uso.
 
@@ -149,9 +161,10 @@ No hay entidades de datos nuevas: el esquema de coordenadas del servicio no camb
 
 ## 11. Clarificaciones
 
-<!-- /sdd-clarify añade aquí:
-### Sesión AAAA-MM-DD
-- P: … → R: … -->
+### Sesión 2026-10-10
+- P: ¿Qué hace el flujo manual? → R: Es el de **desaprovisionamiento**. Se añadió confirmación explícita, copia final de la base y conservación de los recursos de arranque (HU-2, RF-013, RF-013b).
+- P: Los recursos creados a mano, ¿se importan o se referencian? → R: **Se importan** al código y quedan listados en un **pseudoinventario** en el repositorio (RF-010b). Supuesto añadido: los recursos de arranque (OIDC, rol de los flujos, estado) no se importan, para que el desaprovisionamiento no elimine las credenciales de los flujos (RF-010c).
+- P: ¿Quién aplica el esquema? → R: **El flujo de aprovisionamiento**, en cada ejecución, antes de desplegar (RF-016).
 
 ---
 
@@ -162,5 +175,5 @@ No hay entidades de datos nuevas: el esquema de coordenadas del servicio no camb
 - [x] Criterios de aceptación con resultado observable
 - [x] Casos borde identificados
 - [x] Alcance acotado (fuera de alcance explícito)
-- [x] Como máximo 3 `[NEEDS CLARIFICATION]` pendientes
+- [x] Como máximo 3 `[NEEDS CLARIFICATION]` pendientes (0 tras la sesión del 2026-10-10)
 - [x] Coherente con `.sdd/constitution.md` (plantilla sin principios definidos)

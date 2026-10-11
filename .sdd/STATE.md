@@ -12,7 +12,7 @@ estado_tarea: -
 
 ## Siguiente paso
 
-Ejecutar `/sdd-clarify` sobre specs/002-migracion-aws/spec.md: resolver las 3 dudas (qué hace el workflow manual — HU-2/RF-013; importar vs referenciar recursos creados a mano — RF-010; quién aplica el esquema — RF-016). Después, el usuario aprueba la spec para `/sdd-plan`.
+Esperar a que el usuario revise y apruebe specs/002-migracion-aws/spec.md (estado: aclarada); con la aprobación, marcar `Estado: aprobada` y ejecutar `/sdd-plan`. El plan debe incluir la política IAM ampliada del rol de GitHub (Terraform: IAM/ECR/logs/S3 estado/ecs:RunTask para el esquema, destroy).
 
 ## Contexto de trabajo
 
@@ -23,4 +23,4 @@ Ejecutar `/sdd-clarify` sobre specs/002-migracion-aws/spec.md: resolver las 3 du
 
 ## Bloqueos / preguntas abiertas
 
-- 3 `[NEEDS CLARIFICATION]` en la spec 002 (ver siguiente paso).
+- ninguno (spec aclarada, pendiente de aprobación).

@@ -24,3 +24,8 @@
 - 18 RF, 7 RNF. 3 dudas abiertas: qué hace el workflow manual (HU-2/RF-013), importar o referenciar recursos creados a mano (RF-010), quién aplica el esquema (RF-016).
 - Numerada 002 porque `docs/` contiene la spec 001 original del servicio.
 - Nota de entorno: los hooks del arnés invocan `powershell`, no instalado en este Mac; no se ejecutan.
+
+## 2026-10-10 · 002-migracion-aws · Clarificaciones resueltas (spec aclarada)
+- Flujo manual = desaprovisionamiento, con confirmación explícita, copia final de la BD y sin tocar recursos de arranque (HU-2, RF-013, RF-013b).
+- Recursos creados a mano se importan a Terraform y se listan en un pseudoinventario (RF-010b); OIDC, rol de flujos y bucket de estado quedan fuera como arranque (RF-010c, supuesto para no autodestruir credenciales).
+- El esquema lo aplica el flujo de aprovisionamiento en cada ejecución, antes de desplegar (RF-016).
