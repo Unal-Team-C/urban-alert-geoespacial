@@ -1,7 +1,7 @@
 # Tareas: Migración del Servicio Geoespacial a AWS
 
 - **Plan**: ./plan.md
-- **Estado**: borrador <!-- borrador | aprobado -->
+- **Estado**: aprobado <!-- borrador | aprobado -->
 
 Leyenda: `[ ]` pendiente · `[~]` en progreso · `[x]` hecha · `[!]` bloqueada · `[-]` descartada · `[P]` paralelizable
 

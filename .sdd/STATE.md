@@ -6,13 +6,13 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: tasks
+fase: implement
 tarea_actual: T001
 estado_tarea: -
 
 ## Siguiente paso
 
-El usuario revisa y aprueba specs/002-migracion-aws/tasks.md; con la aprobación: `Estado: aprobado` → `/sdd-implement` empezando por T001 (.dockerignore).
+`/sdd-implement` desde T001 (.dockerignore).
 
 ## Contexto de trabajo
 

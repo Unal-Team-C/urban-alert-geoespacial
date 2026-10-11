@@ -49,3 +49,6 @@
 ## 2026-10-10 · 002-migracion-aws · tasks.md generado: 25 tareas
 - Preparación 3, Pruebas 3, Núcleo 13, Integración 2, Pulido 2, Despliegue real 2. Todos los RF/RNF cubiertos.
 - Verificación local de Terraform/actionlint/shellcheck con contenedores Podman (no hay binarios instalados).
+
+## 2026-10-10 · 002-migracion-aws · Tareas aprobadas
+- Aprobadas por el usuario; fase implement.
