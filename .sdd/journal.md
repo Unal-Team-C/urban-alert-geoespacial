@@ -202,3 +202,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T037 hecha
 - Cuarto Provision (run 38111350833) en verde tras 3 correcciones: (1) roles importados con ignore_changes en description + permisos KMS (política de Terraform, aplicada por el usuario); (2) entrada 8000 desde la VPC en el SG de tareas (Express no crea su SG de servicio si se le pasa uno) + diagnóstico automático; (3) búsqueda del listener por la regla host-header (DescribeServices no da loadBalancers en Express). Verificado: humo 4/4 ok (GET reports 200 array, GET coordinates desconocida 404 del servicio, POST sin firma 403, /health 404); a mano: radius 6001 → 400; listener encontrado entre ALB internos (esquema internal); importación sin destruir ni recrear ECR/roles (plan inicial: 0 to destroy, create_date originales).
+
+## 2026-10-10 · 002-migracion-aws · T038 hecha
+- imports.tf borrado; INVENTARIO fechado (2026-10-11, run 38109542072). Verificado: run 38112255331 intento 1 (commit nuevo) en verde: routes «No changes», service solo la imagen, base solo reemplaza la task definition del esquema (lleva el tag = SHA; por diseño cambia en cada commit, matiz respecto al criterio literal de la tarea); intento 2 (mismo commit, RNF-003/MS-003): base, service y routes «No changes», imagen reutilizada, humo 4/4.
