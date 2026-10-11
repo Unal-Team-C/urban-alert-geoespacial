@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T005
+tarea_actual: T006
 estado_tarea: -
 
 ## Siguiente paso
 
-T005: escribir tests/integration/test_migrate.py; debe fallar por ModuleNotFoundError: app.db.migrate.
+T006: escribir tests/integration/test_shutdown.py (uvicorn en subproceso + app con ruta lenta, SIGTERM con petición en curso).
 
 ## Contexto de trabajo
 

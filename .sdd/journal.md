@@ -64,3 +64,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T004 hecha
 - tests/unit/test_observability.py: formateador (campos base, extras, excepción en una línea, extras no serializables), configure_logging (root + uvicorn), middleware (una línea por petición, sin query string, 500 como ERROR). Verificado: falla solo por ModuleNotFoundError: app.observability.
+
+## 2026-10-10 · 002-migracion-aws · T005 hecha
+- tests/integration/test_migrate.py: esquema aplicado (postgis, tabla, índice), dos ejecuciones sin error, privilegios SELECT/INSERT sí y UPDATE/DELETE/TRUNCATE no, sin DDL, contraseña sincronizada (con comillas), sslmode=require falla contra servidor sin TLS. Verificado: falla solo por ModuleNotFoundError: app.db.migrate.
