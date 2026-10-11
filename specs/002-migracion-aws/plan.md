@@ -1,9 +1,63 @@
 # Plan técnico: Migración del Servicio Geoespacial a AWS
 
 - **Spec**: ./spec.md
-- **Estado**: aprobado <!-- borrador | aprobado -->
+- **Estado**: borrador <!-- borrador | aprobado -->
 - **Fecha**: 2026-10-10
 - **Investigación**: ./research.md
+- **Revisión**: v2 (2026-10-11), por la spec v2: exposición solo por el API Gateway compartido. La sección «Revisión v2» prevalece sobre lo que contradiga en §1–§11.
+
+## Revisión v2: consumo de la plataforma compartida
+
+Contrato de la plataforma (`Unal-Team-C/urban-alert-plataforma`, feature 001-red-api-gateway, aprovisionada): parámetros SSM bajo `/urban-alert/plataforma/` (`region`, `vpc-id`, `vpc-cidr`, `subredes-privadas`, `api-id`, `api-endpoint`, `api-execution-arn`, `vpc-link-id`, `vpc-link-sg-id`) y guía `docs/integracion.md`. El rol de GitHub ya tiene `github-actions-urban-alert-platform` (apigateway sobre `/apis/*`, `ssm:GetParameter*` sobre `/urban-alert/*`, `elasticloadbalancing:Describe*`).
+
+**Cambios respecto a la v1**
+
+| Pieza | v1 | v2 |
+|---|---|---|
+| Stacks | `platform` + `service` | `base` (renombre de `platform`, para no confundirlo con la plataforma compartida) + `service` + **`routes`** (D-020) |
+| Red | VPC predeterminada, subredes públicas (D-006) | VPC y subredes privadas de la plataforma leídas de SSM en cada `plan` (D-021). D-006 queda sustituida |
+| Servicio Express | ALB público + URL `.on.aws` | ALB **interno** (subredes privadas), tareas sin IP pública, salida por el NAT de la plataforma |
+| Tarea del esquema | `assignPublicIp=ENABLED` | Subredes privadas, `assignPublicIp=DISABLED` (D-022) |
+| Exposición | URL de Express | Rutas en el API Gateway compartido (D-023) |
+| Comprobación final | `curl` a `<url>/health` | Humo por el gateway (D-024) |
+| Orden de `provision.yml` | pruebas → platform → imagen → esquema → service → salud | **comprobar plataforma** → pruebas → base → imagen → esquema → service → **listener** → routes → humo (D-025) |
+| `deprovision.yml` | service → platform | **routes** → service → base (D-026) |
+
+**Estructura de archivos (v2)**
+
+```text
+infra/base/                  (renombre de infra/platform)
+  network.tf                 (mod.)  data "aws_ssm_parameter" vpc-id / subredes-privadas; SG en la VPC compartida
+  outputs.tf                 (mod.)  subnet_ids = subredes privadas; sin cambios de nombre en el resto
+  tests/base.tftest.hcl      (mod.)  override_data de SSM
+infra/service/
+  main.tf                    (mod.)  remote_state de geoespacial/base.tfstate
+  outputs.tf                 (mod.)  service_endpoint (host sin esquema), cluster_name, service_name
+infra/routes/                (nuevo) backend geoespacial/routes.tfstate; data SSM api-id / vpc-link-id / api-endpoint
+  main.tf                    integraciones HTTP_PROXY por VPC Link + 3 rutas
+  variables.tf               express_endpoint, express_listener_arn (validaciones como el ejemplo de la plataforma)
+  outputs.tf                 gateway_url, route_keys
+  tests/routes.tftest.hcl
+scripts/
+  buscar-listener-express.sh (nuevo, copiado de la plataforma)
+  check-platform.sh          (nuevo) RF-021
+  smoke-gateway-geoespacial.sh (nuevo) D-024
+  run-schema-task.sh         (mod.)  assignPublicIp=DISABLED
+.github/workflows/provision.yml, deprovision.yml (mod.)
+infra/INVENTARIO.md, infra/bootstrap/README.md, README.md (mod.)
+```
+
+**Rutas del gateway (RF-020)** — integraciones según la guía de la plataforma (§4):
+
+| Ruta pública | Ruta del servicio | `authorization_type` |
+|---|---|---|
+| `GET /api/v1/geoespacial/reports` | `/api/v1/geospatial/reports` | `NONE` |
+| `GET /api/v1/geoespacial/coordinates/{id}` | `/api/v1/geospatial/coordinates/$request.path.id` | `NONE` |
+| `POST /api/v1/geoespacial/coordinates` | `/api/v1/geospatial/coordinates` | `AWS_IAM` |
+
+Cada integración: `HTTP_PROXY`, `VPC_LINK` con `vpc-link-id`, `integration_uri` = ARN del listener 443, `payload_format_version = "1.0"`, `tls_config.server_name_to_verify` y `overwrite:header.host` = endpoint del servicio, `overwrite:path` = ruta del servicio. La query string (`lat`, `lon`, `radius`) pasa sin cambios.
+
+**Lo que necesita Reportes** (fuera de alcance, se documenta en el README): en su rol de tarea, `execute-api:Invoke` sobre `<api-execution-arn>/$default/POST/api/v1/geoespacial/coordinates`, y firmar con SigV4 (servicio `execute-api`, `us-east-2`).
 
 ## 1. Resumen técnico
 
@@ -192,7 +246,7 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 - **Alternativas consideradas**: dejar los bloques `import` permanentes; `terraform import` manual por CLI.
 - **Motivo**: un bloque `import` permanente falla después de un desaprovisionamiento (el recurso ya no existe), lo que rompería HU-2 criterio 4. El CLI no deja rastro en el repositorio.
 
-### D-006: Red sobre la VPC predeterminada
+### D-006: Red sobre la VPC predeterminada — **sustituida por D-021 (v2)**
 - **Decisión**: subredes predeterminadas (≥ 2 zonas) por `data "aws_subnets"`; tareas con IP pública para llegar a ECR y Secrets Manager; RDS con `publicly_accessible = false` en un subnet group de esas subredes; SG de RDS con entrada 5432 solo desde el SG de las tareas.
 - **Alternativas consideradas**: VPC propia con subredes privadas + NAT Gateway (≈ 32 USD/mes) o endpoints de VPC.
 - **Motivo**: supuesto de la spec y coste. La base no es accesible desde internet porque no es pública y su SG solo admite al SG de las tareas (HU-3 criterio 2).
@@ -257,6 +311,42 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 - **Alternativas consideradas**: clúster `default`.
 - **Motivo**: la tarea del esquema se lanza antes de que exista el servicio; en una cuenta limpia el clúster `default` puede no existir todavía. Además, el desaprovisionamiento no afecta a otros servicios.
 
+### D-020: Tercer stack `routes` y renombre de `platform` a `base` (v2)
+- **Decisión**: `infra/routes` con estado propio (`geoespacial/routes.tfstate`) para las integraciones y rutas del gateway. `infra/platform` pasa a `infra/base` (estado `geoespacial/base.tfstate`; nada se había aplicado, no hay migración de estado).
+- **Alternativas consideradas**: rutas dentro de `service` aplicadas en dos fases (`-target`); un solo `apply` con `data` del listener.
+- **Motivo**: el ARN del listener del ALB de Express solo existe después de desplegar el servicio y no lo exponen ni Terraform ni la API de Express (guía §3); un stack aparte respeta ese orden sin `-target`. El renombre evita confundir el stack del servicio con la plataforma compartida.
+
+### D-021: Red de la plataforma leída de SSM (sustituye a D-006)
+- **Decisión**: `data "aws_ssm_parameter"` de `vpc-id` y `subredes-privadas` en `base`; RDS (subnet group), SG de tareas y de RDS en esa VPC; `service` y la tarea del esquema usan **todas** las subredes privadas (las salidas de `base`).
+- **Alternativas consideradas**: copiar los IDs a `terraform.tfvars` (prohibido por la guía §1); `terraform_remote_state` del estado de la plataforma.
+- **Motivo**: RF-019 y el contrato de la plataforma (su D-006). Si la plataforma se recrea, el siguiente `plan` toma los IDs nuevos.
+
+### D-022: Tarea del esquema sin IP pública
+- **Decisión**: `run-schema-task.sh` con `assignPublicIp=DISABLED`; sale a ECR/Secrets Manager/CloudWatch por el NAT de la plataforma.
+- **Motivo**: RF-019 y guía §2.
+
+### D-023: Rutas como en el ejemplo de consumidor de la plataforma
+- **Decisión**: copiar el patrón de `infra/ejemplo-consumidor/main.tf` (validado por el CI de la plataforma), sin `iam.tf`: la política de invocación pertenece al stack de Reportes. `express_endpoint` se calcula quitando el esquema de la salida de `service`; `express_listener_arn` con `buscar-listener-express.sh` (copiado sin cambios).
+- **Alternativas consideradas**: referenciar el ejemplo como módulo por git (repo privado; descartado por la plataforma en su D-010).
+- **Motivo**: RF-020 con la configuración ya verificada (Host, TLS, payload 1.0).
+
+### D-024: Prueba de humo por el gateway
+- **Decisión**: `smoke-gateway-geoespacial.sh <api-endpoint>`: `GET /api/v1/geoespacial/reports?lat=4.6486&lon=-74.0628&radius=1000` → 200 con un array JSON; `GET /api/v1/geoespacial/coordinates/<uuid aleatorio>` → 404 del servicio (cuerpo `{code:404,…}`); `POST /api/v1/geoespacial/coordinates` sin firma → 403; `GET /api/v1/geoespacial/health` → 404. Reintentos durante 5 min solo en la primera comprobación.
+- **Alternativas consideradas**: probar `POST` firmado desde el runner (el rol de GitHub no debe tener `execute-api:Invoke`: queda para la verificación manual).
+- **Motivo**: HU-6 criterios 1, 2, 3 y 6 automáticos en cada despliegue; el criterio 4 (firmado) y MS-002 completo se verifican en `/sdd-verify`.
+
+### D-025: Comprobación de la plataforma antes de tocar nada
+- **Decisión**: primer paso del job `provision` (tras obtener credenciales): `check-platform.sh` lee los 9 parámetros de `/urban-alert/plataforma/`; si falta alguno, falla con «la plataforma compartida no está aprovisionada (urban-alert-plataforma)».
+- **Motivo**: RF-021; sin esto el error saldría a mitad del `plan` de `base`.
+
+### D-026: Desaprovisionamiento en orden inverso, sin tocar la plataforma
+- **Decisión**: `routes` destroy → `service` destroy → `base` (allow_destroy) apply → `base` destroy. `routes` recibe valores de relleno válidos en sus dos variables al destruir (no se usan para borrar).
+- **Motivo**: RF-013b v2 y guía §9: las rutas se eliminan antes que el servicio, y la plataforma detecta consumidores si quedan recursos en su VPC.
+
+### D-027: Política del rol de GitHub sin cambios
+- **Decisión**: no se añade ninguna política: `github-actions-urban-alert-platform` ya cubre `apigateway` sobre `/apis/*`, la lectura de SSM y `elasticloadbalancing:Describe*`; `ecs:DescribeServices` está en la de despliegue.
+- **Motivo**: guía §8. Si el primer `apply` encuentra un `AccessDenied`, se corrige en el JSON versionado de bootstrap correspondiente.
+
 ## 9. Estrategia de pruebas
 
 | Nivel | Qué | Cómo |
@@ -268,7 +358,9 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 | Terraform estático | Formato, validez, proveedores resueltos | `terraform fmt -check -recursive infra`; `init -backend=false && validate` en cada stack |
 | Terraform lógico | Precondición de conexiones (5×10 pasa, 6×10 falla); `deletion_protection` true por defecto y false con `allow_destroy`; RDS `publicly_accessible=false`, `storage_encrypted=true`, `backup_retention_period>=7`; SG de RDS solo con origen el SG de tareas | `terraform test` con `mock_provider "aws"` en `infra/*/tests/*.tftest.hcl` |
 | Workflows | Sintaxis y expresiones | `actionlint` (contenedor `rhysd/actionlint`) en el job `test` |
-| Despliegue (e2e) | `/health` 200 en la URL pública; `GET /api/v1/geospatial/reports?lat=4.6486&lon=-74.0628&radius=1000` → 200 | Último paso de `provision.yml` |
+| Rutas (v2) | Exactamente 3 rutas con las claves de RF-020; `POST` con `AWS_IAM` y los `GET` con `NONE`; ninguna `$default`; cada integración con `VPC_LINK`, payload 1.0, `overwrite:header.host` y `server_name_to_verify` = endpoint, `overwrite:path` correcto; validación de `express_endpoint`/`express_listener_arn` | `terraform test` en `infra/routes` (mock + override_data de SSM) |
+| Red (v2) | RDS y SG en la VPC de SSM; subnet group = subredes privadas de SSM | `terraform test` en `infra/base` |
+| Despliegue (e2e) | Humo por el gateway (D-024) | Último paso de `provision.yml` |
 | Verificación manual | MS-002 (contrato completo contra la URL, con un `reportId` aleatorio), MS-003 (segundo `provision` sin cambios), MS-004 (búsqueda de secretos), HU-2 (desaprovisionar y volver a aprovisionar), conexión a RDS desde fuera rechazada | `/sdd-verify` |
 
 ## 10. Riesgos y mitigaciones
@@ -284,6 +376,9 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 | La contraseña de la aplicación queda en el estado de Terraform | Quien lea el bucket la ve | Bucket privado, cifrado, sin acceso público y con TLS obligatorio; solo el rol de GitHub y administradores leen el estado. |
 | Las copias finales se acumulan tras cada desaprovisionamiento | Coste de almacenamiento | Documentar cómo borrarlas; nombre con `run_id` para identificarlas. |
 | Coste del entorno encendido (ALB, RDS, Fargate) | Gasto mensual | Tamaños mínimos (D-016) y flujo de desaprovisionamiento. |
+| El ALB interno de Express es alcanzable desde otras tareas de la VPC (plataforma D-013) | Otra tarea de la VPC podría llamar a `POST` sin pasar por la firma del gateway | Aceptado por el usuario en la plataforma; documentado. Mitigación futura: validar en el servicio una cabecera fija inyectada por el gateway |
+| Primer servicio Express de la VPC fija las zonas del ALB compartido | Si se usan menos zonas, otros servicios fallan | Usar siempre todas las subredes privadas (D-021) |
+| La plataforma se desaprovisiona con el servicio desplegado | Su Deprovision se niega (detecta dependientes) | Orden documentado: primero el Deprovision de cada microservicio |
 | Secretos con ventana de recuperación impiden recrear el nombre | El reaprovisionamiento falla | `recovery_window_in_days = 0` en el secreto de la aplicación; el `rds!…` lo borra RDS con la instancia. |
 
 ## 11. Trazabilidad
@@ -310,6 +405,9 @@ Sale con 0 si todo se aplicó (o ya estaba), con ≠ 0 y un log `ERROR` si falla
 | RF-016 Esquema en cada aprovisionamiento | `scripts/run-schema-task.sh`, paso de `provision.yml` | Ejecución: el paso corre en cada push; fallo → no se aplica service |
 | RF-017 Documentación | `README.md`, `infra/bootstrap/README.md`, `INVENTARIO.md` | Revisión en verify (HU-5) |
 | RF-018 Local sin cambios | `compose.yaml` intacto | `docker compose up -d --build --wait` + suite completa |
+| RF-019 Red privada compartida | `base/network.tf` (SSM), `service/main.tf`, `run-schema-task.sh` (D-021, D-022) | `base.tftest.hcl`; verify: ALB interno, tareas sin IP pública |
+| RF-020 Rutas del gateway | `infra/routes/*` (D-023), `buscar-listener-express.sh` | `routes.tftest.hcl`; humo D-024; verify: POST firmado |
+| RF-021 Falla sin plataforma | `scripts/check-platform.sh` (D-025) | Prueba del script con parámetro inexistente (prefijo de prueba) |
 | RNF-001 Seguridad | D-006, D-007, `.dockerignore`, `::add-mask::` no necesario (no se imprimen secretos) | Verify MS-004; `platform.tftest.hcl` (SG, público=false) |
 | RNF-002 Conexiones ≤ 50 | D-015 | `service.tftest.hcl` |
 | RNF-003 Idempotencia | Dos stacks sin recursos que cambien en cada ejecución (D-001) | MS-003 en verify |

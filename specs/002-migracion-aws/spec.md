@@ -1,7 +1,7 @@
 # Especificación: Migración del Servicio Geoespacial a AWS
 
 - **ID**: 002-migracion-aws
-- **Estado**: aclarada <!-- borrador | aclarada | aprobada | implementada -->
+- **Estado**: aprobada <!-- borrador | aclarada | aprobada | implementada -->
 - **Creada**: 2026-10-10
 - **Entrada original**: "Migración del servicio geoespacial a AWS (rama aws-provisioning): adaptar el código para la nube y crear CI/CD con GitHub Actions usando Terraform como base. Un flujo se ejecuta al hacer commit a main, que es el de aprovisionamiento. El otro flujo se ejecuta manualmente." + alcance acordado en la conversación: configuración para la nube (cadena de conexión desde el almacén de secretos, conexión cifrada, valores de producción, logs para CloudWatch), imagen apta para ECS Express Mode, solo el esquema en RDS PostgreSQL 17 + PostGIS (sin datos semilla ni base de pruebas), infraestructura como código con estado remoto, documentación de despliegue y de variables/secretos. **Revisión v2 (2026-10-11)**: "el API Gateway es el que debe exponer el servicio" → Amazon API Gateway compartido de la plataforma `Unal-Team-C/urban-alert-plataforma`, accesible solo a través de él.
 
@@ -193,7 +193,7 @@ No hay entidades de datos nuevas: el esquema de coordenadas del servicio no camb
 
 ### Sesión 2026-10-11 (revisión v2)
 - P: ¿Cómo se expone el servicio? → R: Por **Amazon API Gateway**, **compartido** por todos los microservicios y gestionado en el repo `urban-alert-plataforma`; el servicio queda accesible **solo** por el gateway (HU-6, RF-019, RF-020, RF-021).
-- Convención de rutas, firma IAM de la ruta interna y lectura del contrato por SSM: tomadas de la guía de integración de la plataforma (`docs/integracion.md`). La ruta `POST` es interna porque solo la llama Reportes.
+- Convención de rutas, firma IAM de la ruta interna y lectura del contrato por SSM: tomadas de la guía de integración de la plataforma (`docs/integracion.md`). La ruta `POST` es interna porque solo la llama Reportes (confirmado por el usuario: «Déjala privada»).
 
 ---
 

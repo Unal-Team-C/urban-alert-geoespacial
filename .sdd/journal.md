@@ -140,3 +140,10 @@
 - Plataforma lista (urban-alert-plataforma 001-red-api-gateway; gateway https://aotsp8k5ad.execute-api.us-east-2.amazonaws.com). Contrato SSM /urban-alert/plataforma/ y guía docs/integracion.md.
 - Nueva HU-6 y RF-019 (red privada compartida desde SSM, sin URL ni IP pública), RF-020 (GET reports y GET coordinates/{id} públicas; POST coordinates interna con AWS_IAM; nada más publicado, ni /health), RF-021 (falla si no hay plataforma). Cambian RF-012 (registrar rutas + comprobación por el gateway), RF-013b (rutas primero, no tocar plataforma), RF-017, RNF-001, RNF-004, MS-002, supuestos y fuera de alcance.
 - Estado: aclarada, pendiente de aprobación antes de replanificar.
+
+## 2026-10-11 · 002-migracion-aws · Spec v2 aprobada
+- Usuario: «Déjala privada. Apruebo spec». POST /coordinates queda interna (AWS_IAM). Fase plan.
+
+## 2026-10-11 · 002-migracion-aws · Plan y tareas v2 (borrador)
+- Plan: sección «Revisión v2» + D-020 (stack routes, renombre platform→base), D-021 (red por SSM, sustituye D-006), D-022 (esquema sin IP pública), D-023 (rutas como el ejemplo de la plataforma), D-024 (humo por el gateway), D-025 (check-platform), D-026 (deprovision routes→service→base), D-027 (sin política nueva).
+- Tareas: T024/T025 descartadas (sustituidas por T037/T038); nuevas T026–T038 (13).

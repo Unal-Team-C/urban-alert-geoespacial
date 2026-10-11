@@ -6,13 +6,13 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: specify
-tarea_actual: T024
-estado_tarea: bloqueada
+fase: plan
+tarea_actual: T026
+estado_tarea: -
 
 ## Siguiente paso
 
-El usuario revisa y aprueba la spec 002 v2 (estado aclarada). Con la aprobación: `Estado: aprobada` → replanificar (`/sdd-plan`: red de la plataforma por SSM, schema task sin IP pública, stack de rutas tras el servicio con buscar-listener-express.sh, deprovision de rutas, política de plataforma) → actualizar tasks.md.
+El usuario revisa y aprueba plan v2 y tareas T026–T038; con la aprobación: Estado aprobado en ambos → /sdd-implement desde T026.
 
 ## Contexto de trabajo
 
@@ -31,5 +31,4 @@ El usuario revisa y aprueba la spec 002 v2 (estado aclarada). Con la aprobación
 
 ## Bloqueos / preguntas abiertas
 
-- T024: confianza OIDC pendiente de actualizar en AWS por el usuario.
-- Cambio de requisitos (API Gateway compartido + servicio privado) pendiente de reflejar en spec/plan/tareas; depende de la plataforma compartida.
+- ninguno (pendiente de aprobación del plan/tareas v2)
