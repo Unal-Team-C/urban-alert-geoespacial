@@ -82,3 +82,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T010 hecha
 - infra/platform: versions (TF >=1.10 <2, aws ~>6.0, random ~>3.6), backend S3 (urban-alert-tfstate-348364742283, geoespacial/platform.tfstate, use_lockfile, encrypt), provider con default_tags, variables (validación de prefijo urban-alert- y backups >= 7), terraform.tfvars, network (VPC/subredes predeterminadas, SG tareas con salida, SG RDS con 5432 solo desde SG tareas). .gitignore con artefactos de Terraform. Verificado: init -backend=false + validate «Success» y fmt -check limpio con hashicorp/terraform:1.16.5 (podman).
+
+## 2026-10-10 · 002-migracion-aws · T011 hecha
+- ecr.tf: repo inmutable, scan on push, AES256, force_delete = allow_destroy, ciclo de vida de N imágenes. iam.tf: roles execution (ecs-tasks) e infrastructure (ecs) con sus políticas gestionadas; read-project-secrets = GetSecretValue sobre urban-alert-* y sobre rds!* condicionado al tag aws:rds:primaryDBInstanceArn de esta base (evita dependencia circular con RDS). Verificado: validate «Success», fmt limpio.

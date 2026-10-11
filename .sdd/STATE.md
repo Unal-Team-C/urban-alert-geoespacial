@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T011
+tarea_actual: T012
 estado_tarea: -
 
 ## Siguiente paso
 
-T011: infra/platform/ecr.tf + iam.tf (roles importables, adjuntos, read-project-secrets ampliada).
+T012: rds.tf (PG17 micro, privada, cifrada, backups, managed master password, protección/snapshot por allow_destroy) + secrets.tf (random_password, JSON con DATABASE_URL sslmode=require, recovery 0).
 
 ## Contexto de trabajo
 
@@ -25,6 +25,7 @@ T011: infra/platform/ecr.tf + iam.tf (roles importables, adjuntos, read-project-
 - Gotcha: `docker-compose` necesita `export DOCKER_CONFIG=~/.docker-podman` (si no, falla docker-credential-desktop).
 - Terraform local: wrapper `<scratchpad>/tf` (podman, hashicorp/terraform:1.16.5, caché de plugins en ~/.cache/tf-plugins). En zsh no usar `$TF` con espacios.
 - Riesgo abierto: el SG de tareas no tiene reglas de entrada; se asume que Express añade su propio SG ALB→tareas (comprobar en T024).
+- Supuesto a comprobar en T024: RDS etiqueta su secreto maestro con `aws:rds:primaryDBInstanceArn` (la política read-project-secrets lo usa como condición). Los roles urban-alert-ecs-* son compartibles por nombre pero este stack los destruye al desaprovisionar: avisar al usuario.
 - Rama `aws-provisioning`. Numeración 002 porque `docs/` ya contiene la spec 001-servicio-geoespacial original.
 
 ## Bloqueos / preguntas abiertas
