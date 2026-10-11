@@ -58,3 +58,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T002 hecha
 - infra/bootstrap/: README (OIDC, rol de GitHub con sus dos políticas, bucket de estado, secretos/variables de GitHub) + 5 JSON (confianza, política de despliegue corregida, política de Terraform, política TLS y ciclo de vida del bucket). Verificado: json.tool sin errores.
+
+## 2026-10-10 · 002-migracion-aws · T003 hecha
+- infra/INVENTARIO.md: 6 recursos importados (ECR, 2 roles, 2 adjuntos, read-project-secrets) con ID/dirección/bloque import; recursos que crea Terraform; arranque como no gestionado. La regla de ciclo de vida de ECR no se importa (PutLifecyclePolicy sobrescribe). Verificado: cada importado tiene las tres columnas.

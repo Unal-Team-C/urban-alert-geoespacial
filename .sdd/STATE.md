@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T003
+tarea_actual: T004
 estado_tarea: -
 
 ## Siguiente paso
 
-T003: crear infra/INVENTARIO.md con recursos importados (ECR, roles, adjuntos, read-project-secrets) y externos de arranque.
+T004: escribir tests/unit/test_observability.py (formateador JSON + middleware de acceso); debe fallar por ModuleNotFoundError.
 
 ## Contexto de trabajo
 
