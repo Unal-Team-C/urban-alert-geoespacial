@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T019
+tarea_actual: T020
 estado_tarea: -
 
 ## Siguiente paso
 
-T019: lockfiles multiplataforma (linux_amd64, linux_arm64, darwin_arm64) en ambos stacks + fmt.
+T020: .github/workflows/provision.yml (test + provision en el orden de D-004); actionlint.
 
 ## Contexto de trabajo
 

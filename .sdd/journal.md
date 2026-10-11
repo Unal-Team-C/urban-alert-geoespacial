@@ -106,3 +106,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T018 hecha
 - scripts/run-schema-task.sh: run-task Fargate con assignPublicIp=ENABLED, error si no arranca (failures), wait tasks-stopped, imprime logs (stream schema/schema/<id>), sale con el exitCode del contenedor o 1 si no llegó a ejecutarse (stoppedReason). Variables: CLUSTER, TASK_DEFINITION, SUBNETS, SECURITY_GROUP, LOG_GROUP, CONTAINER. Verificado: bash -n y shellcheck sin avisos.
+
+## 2026-10-10 · 002-migracion-aws · T019 hecha
+- .terraform.lock.hcl de platform (aws 6.68.0 + random) y service (aws 6.68.0) con hashes para linux_amd64, linux_arm64 y darwin_arm64. Verificado: init -backend=false -lockfile=readonly OK en ambos; fmt -check limpio.
