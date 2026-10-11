@@ -165,3 +165,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T030 hecha
 - infra/service/outputs.tf: service_arn, service_name, cluster_name y service_endpoint (host sin esquema ni barra final, de ingress_paths[0].endpoint); se elimina service_url (ya no hay URL pública). Pruebas nuevas endpoint_is_a_bare_host y endpoint_without_scheme_is_kept con override_resource. Verificado: service test 6 passed.
+
+## 2026-10-10 · 002-migracion-aws · T031 hecha
+- infra/routes: versions, backend geoespacial/routes.tfstate, providers (Stack=routes), variables express_endpoint/express_listener_arn con validación (como el ejemplo de la plataforma), main.tf (SSM api-id/vpc-link-id/api-endpoint con nonsensitive; 3 integraciones HTTP_PROXY por VPC_LINK con payload 1.0, TLS y Host = endpoint, overwrite:path; 3 rutas GET NONE / POST AWS_IAM), outputs gateway_url y route_keys, lockfile linux_amd64/linux_arm64/darwin_arm64. Verificado: init -lockfile=readonly y validate «Success»; fmt limpio.

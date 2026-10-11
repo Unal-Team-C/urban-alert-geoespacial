@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T031
+tarea_actual: T032
 estado_tarea: -
 
 ## Siguiente paso
 
-T031: crear infra/routes (backend, providers, SSM, variables con validación, 3 integraciones + 3 rutas, outputs, lockfile).
+T032: infra/routes/tests/routes.tftest.hcl.
 
 ## Contexto de trabajo
 
