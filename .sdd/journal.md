@@ -118,3 +118,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T022 hecha
 - README: sección «Despliegue en AWS» (diagrama del flujo, tabla de piezas, arranque con enlace a infra/bootstrap, secretos/variables con ejemplo, enlace a INVENTARIO.md, tabla de workflows y cómo lanzar Deprovision, costes, restaurar y borrar copias finales, validación local con Podman); intro, Escalado y Estructura actualizados. Verificado: cubre los cuatro puntos de RF-017 y enlaza bootstrap/README.md e INVENTARIO.md.
+
+## 2026-10-10 · 002-migracion-aws · T023 hecha
+- CLAUDE.md: gotcha DOCKER_CONFIG/podman, stacks y estado, workflows, migrate, comandos de validación con Podman (terraform 1.16.5, actionlint 1.7.7, shellcheck). Cabecera de tasks.md alineada con esas versiones. Verificado: los comandos coinciden con los usados en T010–T021.

@@ -12,8 +12,8 @@ Dependencias: cada fase depende de la anterior; dentro de una fase se ejecuta en
 Dependencias explícitas: añadir `— depende: T00X`.
 
 **Herramientas de verificación local** (no hay `terraform` ni `actionlint` instalados; se usan contenedores con Podman, con `podman machine start` previo):
-- `TF="podman run --rm -v $PWD:/w -w /w docker.io/hashicorp/terraform:1.13"` → `$TF -chdir=infra/<stack> init -backend=false`, `validate`, `test`, `fmt -check -recursive infra`
-- `podman run --rm -v $PWD:/repo -w /repo docker.io/rhysd/actionlint:latest`
+- `podman run --rm -v "$PWD":/w -w /w docker.io/hashicorp/terraform:1.16.5 -chdir=infra/<stack> init -backend=false` y luego `validate`, `test`; `fmt -check -recursive infra` (abajo, `$TF` abrevia este comando)
+- `podman run --rm -v $PWD:/repo -w /repo docker.io/rhysd/actionlint:1.7.7`
 - `podman run --rm -v $PWD:/mnt -w /mnt docker.io/koalaman/shellcheck:stable scripts/*.sh`
 - Pruebas Python: `docker-compose --profile test run --rm --build tests` (ver README si falla `docker-credential-desktop`)
 
@@ -53,7 +53,7 @@ Dependencias explícitas: añadir `— depende: T00X`.
 ## Fase 5: Pulido
 
 - [x] T022 [P] Añadir al README la sección «Despliegue en AWS»: arquitectura, recursos de arranque (enlace a `infra/bootstrap/`), secretos/variables de GitHub, qué hace cada workflow y cómo lanzarlos, inventario, costes aproximados y cómo desaprovisionar, restaurar la copia final y borrar copias antiguas — archivos: README.md — cubre: RF-017, RNF-006 — verifica: la sección cubre los cuatro puntos de RF-017 y enlaza `infra/bootstrap/README.md` e `infra/INVENTARIO.md`
-- [ ] T023 [P] Actualizar CLAUDE.md con la estructura `infra/` y los comandos de verificación con Podman — archivos: CLAUDE.md — cubre: — (pulido) — verifica: los comandos documentados coinciden con los de este fichero
+- [x] T023 [P] Actualizar CLAUDE.md con la estructura `infra/` y los comandos de verificación con Podman — archivos: CLAUDE.md — cubre: — (pulido) — verifica: los comandos documentados coinciden con los de este fichero
 
 ## Fase 6: Despliegue real (requiere acciones del usuario en GitHub)
 

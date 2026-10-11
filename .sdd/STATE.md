@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T023
+tarea_actual: T024
 estado_tarea: -
 
 ## Siguiente paso
 
-T023: actualizar CLAUDE.md con infra/ y comandos de verificación con Podman.
+T024 requiere al usuario: confirmar push de aws-provisioning y apertura del PR a main; al fusionar se ejecuta el primer Provision real (costes en AWS).
 
 ## Contexto de trabajo
 
