@@ -31,4 +31,4 @@ T024: rama subida y PR aws-provisioning → main abierto; esperar a que el usuar
 
 ## Bloqueos / preguntas abiertas
 
-- Push de aws-provisioning rechazado: el token de `gh` no tiene el scope `workflow` (necesario para subir .github/workflows/). El usuario debe ejecutar `gh auth refresh -h github.com -s workflow`; luego reintentar el push. PR #1 ya abierto (https://github.com/Unal-Team-C/urban-alert-geoespacial/pull/1), se actualizará con el push.
+- ninguno (scope workflow concedido; rama subida). Esperando que el usuario fusione el PR #1.
