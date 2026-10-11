@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T001
+tarea_actual: T002
 estado_tarea: -
 
 ## Siguiente paso
 
-`/sdd-implement` desde T001 (.dockerignore).
+T002: crear infra/bootstrap/ (README + JSON de confianza OIDC, política de despliegue corregida, política de Terraform, política y ciclo de vida del bucket).
 
 ## Contexto de trabajo
 

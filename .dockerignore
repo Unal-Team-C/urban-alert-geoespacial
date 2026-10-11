@@ -7,3 +7,6 @@ specs
 .pytest_cache
 .venv
 *.md
+infra
+.github
+scripts

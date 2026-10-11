@@ -52,3 +52,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · Tareas aprobadas
 - Aprobadas por el usuario; fase implement.
+
+## 2026-10-10 · 002-migracion-aws · T001 hecha
+- .dockerignore excluye infra/, .github/, scripts/. Verificado: podman build --target runtime OK; /srv solo contiene app y requirements.txt.
