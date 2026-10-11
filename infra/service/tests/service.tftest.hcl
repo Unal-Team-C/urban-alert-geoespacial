@@ -82,3 +82,37 @@ run "connection_budget_exceeded_is_rejected" {
 
   expect_failures = [aws_ecs_express_gateway_service.this]
 }
+
+run "endpoint_is_a_bare_host" {
+  command = apply
+
+  override_resource {
+    target = aws_ecs_express_gateway_service.this
+    values = {
+      service_name  = "urban-alert-geoespacial"
+      ingress_paths = [{ access_type = "PRIVATE", endpoint = "https://urban-alert-geoespacial-abc.ecs.us-east-2.on.aws/" }]
+    }
+  }
+
+  assert {
+    condition     = output.service_endpoint == "urban-alert-geoespacial-abc.ecs.us-east-2.on.aws"
+    error_message = "service_endpoint must be the host only (no scheme, no trailing slash)."
+  }
+}
+
+run "endpoint_without_scheme_is_kept" {
+  command = apply
+
+  override_resource {
+    target = aws_ecs_express_gateway_service.this
+    values = {
+      service_name  = "urban-alert-geoespacial"
+      ingress_paths = [{ access_type = "PRIVATE", endpoint = "urban-alert-geoespacial-abc.ecs.us-east-2.on.aws" }]
+    }
+  }
+
+  assert {
+    condition     = output.service_endpoint == "urban-alert-geoespacial-abc.ecs.us-east-2.on.aws"
+    error_message = "A host without scheme must be returned unchanged."
+  }
+}

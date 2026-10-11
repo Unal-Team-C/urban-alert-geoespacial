@@ -7,12 +7,12 @@
 
 feature_activa: 002-migracion-aws
 fase: implement
-tarea_actual: T030
+tarea_actual: T031
 estado_tarea: -
 
 ## Siguiente paso
 
-T030: service: remote_state base (ya hecho en T026), salidas service_endpoint/service_name/cluster_name; tests.
+T031: crear infra/routes (backend, providers, SSM, variables con validación, 3 integraciones + 3 rutas, outputs, lockfile).
 
 ## Contexto de trabajo
 

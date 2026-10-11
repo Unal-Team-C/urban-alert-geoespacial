@@ -162,3 +162,6 @@
 
 ## 2026-10-10 · 002-migracion-aws · T029 hecha
 - run-schema-task.sh: assignPublicIp=DISABLED con comentario (subredes privadas + NAT de la plataforma). Verificado: 1 coincidencia; shellcheck sin avisos.
+
+## 2026-10-10 · 002-migracion-aws · T030 hecha
+- infra/service/outputs.tf: service_arn, service_name, cluster_name y service_endpoint (host sin esquema ni barra final, de ingress_paths[0].endpoint); se elimina service_url (ya no hay URL pública). Pruebas nuevas endpoint_is_a_bare_host y endpoint_without_scheme_is_kept con override_resource. Verificado: service test 6 passed.
