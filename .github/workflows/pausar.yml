@@ -1,0 +1,99 @@
+# Pause of urban-alert-geoespacial without deprovisioning: stops billing and keeps every piece of data.
+# Removes only the stateless compute (routes in the shared gateway and the Express service, with its load balancer)
+# and stops the RDS instance (Terraform: aws_rds_instance_state). Kept: RDS (stopped) with its data, ECR images,
+# secrets, roles and logs. Usually run by the Pausar workflow of urban-alert-plataforma; Provision recreates it all.
+name: Pausar
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Escribe urban-alert-geoespacial para confirmar la pausa (los datos se conservan)"
+        required: true
+        type: string
+
+# Same group as Provision and Deprovision: runs touching this infrastructure never overlap.
+concurrency:
+  group: urban-alert-geoespacial-aws
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_VERSION: 1.16.5
+  TF_IN_AUTOMATION: "true"
+  # The commit of main, as deployed by the last Provision: the base stack (migration task) does not change.
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  pausar:
+    name: Pause urban-alert-geoespacial
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          REF: ${{ github.ref }}
+        run: |
+          if [ "$CONFIRM" != "urban-alert-geoespacial" ]; then
+            echo "::error::Confirmation missing: type urban-alert-geoespacial. Nothing was changed."
+            exit 1
+          fi
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Run this workflow on main (the AWS role only trusts main). Nothing was changed."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Remove the routes from the shared API Gateway
+        run: |
+          terraform -chdir=infra/routes init -input=false
+          if [ -z "$(terraform -chdir=infra/routes state list)" ]; then
+            echo "Routes stack is already empty."
+          else
+            # Placeholders that satisfy the variable validations; destroying does not use them.
+            terraform -chdir=infra/routes destroy -input=false -auto-approve \
+              -var "express_endpoint=pausa.invalid" \
+              -var "express_listener_arn=arn:aws:elasticloadbalancing:us-east-2:000000000000:listener/app/pausa/0/0"
+          fi
+
+      - name: Remove the Express service (tasks and load balancer; no state)
+        run: |
+          terraform -chdir=infra/service init -input=false
+          if [ -z "$(terraform -chdir=infra/service state list)" ]; then
+            echo "Service stack is already empty."
+          else
+            terraform -chdir=infra/service destroy -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
+          fi
+
+      - name: Stop the database (base with pausada = true; protection and data stay)
+        run: |
+          terraform -chdir=infra/base init -input=false
+          terraform -chdir=infra/base plan -input=false -no-color -out=tfplan \
+            -var "image_tag=$IMAGE_TAG" -var pausada=true | tee plan.txt
+          terraform -chdir=infra/base apply -input=false tfplan
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### urban-alert-geoespacial en pausa"
+            echo "- Plan de base: \`$(grep -E '^(Plan:|No changes)' plan.txt 2>/dev/null || echo 'no disponible')\`"
+            echo "- Rutas y servicio Express retirados; RDS \`urban-alert-geoespacial-db\` detenida con sus datos."
+            echo "- Para volver: workflow **Reanudar** de urban-alert-plataforma (o Provision de este repo, ya sin pausa)."
+          } >> "$GITHUB_STEP_SUMMARY"
