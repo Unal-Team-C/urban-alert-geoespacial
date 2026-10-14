@@ -6,13 +6,13 @@
      estado_tarea: - | en_progreso | hecha | bloqueada -->
 
 feature_activa: 002-migracion-aws
-fase: implement
-tarea_actual: T038
-estado_tarea: en_progreso
+fase: verify
+tarea_actual: -
+estado_tarea: -
 
 ## Siguiente paso
 
-T038: git rm infra/base/imports.tf; quitar override_resource de imports? (no: siguen siendo válidos); fechar importación en INVENTARIO.md; push a main; comprobar No changes en base y routes.
+Todas las tareas cerradas: ejecutar /sdd-verify (MS-002 con POST firmado, MS-004 secretos, HU-2 desaprovisionar/reaprovisionar con autorización, verificar ALB interno). Pendiente aparte: llevar la corrección de buscar-listener-express.sh a urban-alert-plataforma.
 
 ## Contexto de trabajo
 
