@@ -1,6 +1,6 @@
 # Pause of urban-alert-geoespacial without deprovisioning: stops billing and keeps every piece of data.
 # Removes only the stateless compute (routes in the shared gateway and the Express service, with its load balancer)
-# and stops the RDS instance (Terraform: aws_rds_instance_state). Kept: RDS (stopped) with its data, ECR images,
+# and stops the RDS instance (scripts/rds-estado.sh). Kept: RDS (stopped) with its data, ECR images,
 # secrets, roles and logs. Usually run by the Pausar workflow of urban-alert-plataforma; Provision recreates it all.
 name: Pausar
 
@@ -23,7 +23,7 @@ permissions:
 env:
   TF_VERSION: 1.16.5
   TF_IN_AUTOMATION: "true"
-  # The commit of main, as deployed by the last Provision: the base stack (migration task) does not change.
+  # Required by the service stack; destroying does not use it.
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -81,19 +81,14 @@ jobs:
             terraform -chdir=infra/service destroy -input=false -auto-approve -var "image_tag=$IMAGE_TAG"
           fi
 
-      - name: Stop the database (base with pausada = true; protection and data stay)
-        run: |
-          terraform -chdir=infra/base init -input=false
-          terraform -chdir=infra/base plan -input=false -no-color -out=tfplan \
-            -var "image_tag=$IMAGE_TAG" -var pausada=true | tee plan.txt
-          terraform -chdir=infra/base apply -input=false tfplan
+      - name: Stop the database (data, snapshots and protection stay)
+        run: scripts/rds-estado.sh detener urban-alert-geoespacial-db
 
       - name: Summary
         if: always()
         run: |
           {
             echo "### urban-alert-geoespacial en pausa"
-            echo "- Plan de base: \`$(grep -E '^(Plan:|No changes)' plan.txt 2>/dev/null || echo 'no disponible')\`"
             echo "- Rutas y servicio Express retirados; RDS \`urban-alert-geoespacial-db\` detenida con sus datos."
             echo "- Para volver: workflow **Reanudar** de urban-alert-plataforma (o Provision de este repo, ya sin pausa)."
           } >> "$GITHUB_STEP_SUMMARY"
