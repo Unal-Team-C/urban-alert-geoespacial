@@ -98,6 +98,11 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
+      # After a pause the instance is stopped. aws_rds_instance_state cannot start it (it waits for "available"
+      # first), so it is started here; then its state matches the configuration and Terraform changes nothing.
+      - name: Start the RDS instance if it is stopped (after a pause)
+        run: scripts/arrancar-rds.sh urban-alert-geoespacial-db
+
       - name: Apply base (ECR, roles, security groups, RDS, secret, logs, schema task)
         run: |
           terraform -chdir=infra/base init -input=false
